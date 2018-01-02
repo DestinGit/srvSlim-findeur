@@ -1,0 +1,1291 @@
+<!-- /////////////////////////
+   Connex
+   <txp:output_form form="2017_site1"/>
+   //////////////////////////-->
+<txp:if_category name="connex">
+    <script>
+        function fermer() {
+            document.getElementById("fenetre_alert").style.visibility="hidden";
+        }
+    </script>
+    <div id="fenetre_alert">
+        <div id="croix" onclick="fermer()">X</div>
+        Vous devez compléter votre profil pour postuler.
+        </br>
+        </br>
+        <span><a rel="bookmark" href="https://findeur.fr/site/36/creez-ou-modifiez-votre-profil" class="btn orange">Compléter mon profil</a></span>
+    </div>
+    <section class="sectionBreadcrumb">
+        <div class="container">
+            <ol class="breadcrumb">
+                <li><a href="/">Accueil</a></li>
+                <li>Espace membre</li>
+            </ol>
+        </div>
+    </section>
+    <txp:cbe_frontauth_protect>
+        <txp:hide>
+            <!--  ///////////////////////////
+               Stripe AE
+               /////////////////////////// -->
+        </txp:hide>
+        <txp:cbe_frontauth_protect level="6">
+            <section class="sectionPageTitle sectionPageAE">
+                <div class="container">
+                    <div class="col-sm-12">
+                        <h1 class="title AETitle">Espace Membre</h1>
+                        <h2 class="subtitle AESubtitle">
+                            Bonjour
+                            <span class="coulorange">
+                        <txp:cbe_frontauth_whois type="RealName" />
+                     </span>
+                            <br>Bienvenue dans votre Espace Membre
+                        </h2>
+                        <div class="row">
+                     <span id="btns-dashboard ">
+
+                           <a href="https://findeur.fr/blog/" class="btn small orange btn-dashboard AEBtnDash" style="float:left;">blog</a>
+
+                           <a href="https://findeur.fr/livreblanc/" class="btn small orange btn-dashboard AEBtnDash">Livre Blanc</a>
+
+                           <a href="https://findeur.fr/site/5077/findeur-drink" class="btn small orange btn-dashboard AEBtnDash" style="float:right;">findeur'drink</a>
+
+                     </span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            <section class="sectionInscription grey-bg padding-bottom">
+                <div class="container">
+                    <div class="col-md-10 col-md-offset-1 inscription-block">
+                        <div class="tab-content">
+                            <txp:variable name="mykeywords">
+                                <txp:article_custom author='<txp:cbe_frontauth_whois />' limit="1">
+                                    <txp:keywords />
+                                </txp:article_custom>
+                            </txp:variable>
+                            <txp:smd_if field="postvar:postule,postvar:postule_id,postvar:postule_ae" operator="isused,isused,isused" logic="or" >
+                                <txp:adi_gps type="post" />
+                                <div class="alert alert-success">
+                                    <txp:article_custom id='<txp:variable name="postule_id"/>'>
+                                        <txp:if_custom_field name="postuler">
+                                            <txp:variable name="ch_postuler">
+                                                <txp:custom_field name="postuler"/>
+                                            </txp:variable>
+                                        </txp:if_custom_field>
+                                        <txp:variable name="envo">
+                                            <txp:author title="0"/>
+                                        </txp:variable>
+                                        <txp:variable name="titre">
+                                            <txp:title/>
+                                        </txp:variable>
+                                        <txp:variable name="portable">
+                                            <txp:custom_field name="portable"/>
+                                        </txp:variable>
+                                    </txp:article_custom>
+                                    <txp:if_variable name="ch_postuler">
+                                        <txp:variable name="new_postuler">
+                                            <txp:variable name="ch_postuler"/>
+                                            ,
+                                            <txp:variable name="postule_ae"/>
+                                        </txp:variable>
+                                        <txp:else/>
+                                        <txp:variable name="new_postuler">
+                                            <txp:variable name="postule_ae"/>
+                                        </txp:variable>
+                                    </txp:if_variable>
+                                    <txp:variable name="cae" value="0"/>
+                                    <txp:rah_repeat value='<txp:variable name="new_postuler"/>'>
+                                        <txp:adi_calc name="cae" add="1" />
+                                    </txp:rah_repeat>
+                                    <txp:smd_query query="UPDATE textpattern set custom_27=IF(custom_27='', '?postule_ae', CONCAT(custom_27,',','?postule_ae')) WHERE ID='?postule_id'"/>
+                                    <!-- Envoi Mail et SMS au donneur d'ordre -->
+                                    <txp:smd_query query="SELECT email, phone from txp_users WHERE name='?envo'">
+                                        <txp:php>
+                                            $titr = variable(array('name' => 'titre'));
+                                            $message = "";
+                                            $message .= "Bonjour\r\n\r\nVotre annonce ".$titr." a reçu une nouvelle candidature.\r\nConnectez-vous à votre espace membre Findeur pour gérer vos candidatures\r\n\r\n";
+                                            $message .= "Cordialement\r\nLa team Findeur.";
+                                            $subj = "Nouvelle candidature Findeur";
+                                            $headers = "Content-Type: text/plain;charset=utf-8\r\n".'From: info@findeur.pro'."\r\n".'Reply-To: info@findeur.pro'."\r\n".'X-Mailer: PHP/'.phpversion();
+                                            // Envoi du mail
+                                            mail('{email}', $subj, $message, $headers);
+                                        </txp:php>
+                                        <txp:if_variable name="cae" value="4">
+                                            <txp:php>
+                                                global $sitename, $prefs, $txpcfg;
+                                                $portable = variable(array('name' => 'portable'));
+                                                $titr = variable(array('name' => 'titre'));
+                                                require(txpath.'/sms/sms.inc.php');
+                                                require(txpath.'/sms/sms.php');
+                                                $sms_text    = "Bonjour, votre annonce \"".$titr."\" a reçu plusieurs candidatures. Connectez-vous à votre espace membre pour les visualiser (lien bit.ly/2nHTrSo). Findeur STOP au XXXXX";
+                                                $sms_type    = SMS_PREMIUM_FRANCE;
+                                                $sms_sender    = "Findeur";
+                                                $smsData = array();
+                                                $phone = str_replace(' ', '', $portable);
+                                                $phone = str_replace('.', '', $phone);
+                                                $phone = str_replace('-', '', $phone);
+                                                if (substr($phone, 0, 1) === '0') {
+                                                $phone = preg_replace('/^0/', '+33', $phone);
+                                                }
+                                                if ($phone <> "")
+                                                {
+                                                $smsData[] = $phone;
+                                                $sms = new SMS();
+                                                $sms->set_user_login($user_login);
+                                                $sms->set_api_key($api_key);
+                                                $sms->set_sms_text($sms_text);
+                                                $sms->set_sms_recipients($smsData);
+                                                $sms->set_sms_type($sms_type);
+                                                $sms->set_sms_sender($sms_sender);
+                                                $xml = $sms->send();
+                                                }
+                                            </txp:php>
+                                        </txp:if_variable>
+                                        <!-- Désactive annonce si 22 candidats -->
+                                        <txp:if_variable name="cae" value="22">
+                                            <txp:smd_query query="UPDATE textpattern set custom_1='inactif' WHERE ID='?postule_id'"/>
+                                        </txp:if_variable>
+                                        <span>-/-</span>
+                                        <txp:else />
+                                        <p>Erreur de données echo</p>
+                                    </txp:smd_query>
+                                    <!-- Envoi Email vers AE -->
+                                    <txp:smd_query query="SELECT email, phone from txp_users WHERE name='?postule_ae'">
+                                        <txp:php>
+                                            $titr = variable(array('name' => 'titre'));
+                                            $message = "";
+                                            $message .= "Bonjour\r\n\r\nVotre candidature à l'annonce ".$titr." a bien été enregistrée.\r\n\r\nUne notification vient d'être envoyée à l'entreprise qui reviendra vers-vous via votre profil Findeur.\r\n\r\nAssurez-vous que votre profil est à jour (photos, compétences...etc).\r\n\r\n";
+                                            $message .= "Cordialement\r\nL'équipe Findeur.";
+                                            $subj = " Confirmation votre candidature sur Findeur";
+                                            $headers = "Content-Type: text/plain;charset=utf-8\r\n".'From: info@findeur.pro'."\r\n".'Reply-To: info@findeur.pro'."\r\n".'X-Mailer: PHP/'.phpversion();
+                                            // Envoi du mail
+                                            mail('{email}', $subj, $message, $headers);
+                                        </txp:php>
+                                        <span>-//-</span>
+                                        <txp:else />
+                                        <p>Erreur de données echo</p>
+                                    </txp:smd_query>
+                                    <!-- Envoi Email vers FINDEUR -->
+                                    <txp:php>
+                                        $titr = variable(array('name' => 'titre'));
+                                        $id_art = variable(array('name' => 'postule_id'));
+                                        $id_ae = variable(array('name' => 'postule_ae'));
+                                        $message = "";
+                                        $message .= "Annonce ".$titr."\r\n\r\nID :".$id_art."\r\nAE :".$id_ae."\r\n";
+                                        $subj = "Nouvelle candidature ".$id_art." - ".$id_ae;
+                                        $headers = "Content-Type: text/plain;charset=utf-8\r\n".'From: info@findeur.pro'."\r\n".'Reply-To: info@findeur.pro'."\r\n".'X-Mailer: PHP/'.phpversion();
+                                        // Envoi du mail
+                                        mail('info@findeur.fr', $subj, $message, $headers);
+                                    </txp:php>
+                                    <span>-///-</span>
+                                    <p>Merci d'avoir postulé</p>
+                                </div>
+                            </txp:smd_if>
+                            <txp:variable name="moi_ae">
+                                <txp:cbe_frontauth_whois />
+                            </txp:variable>
+                            <div class="row">
+                                <div class="col-md-3 information AEinfos">
+                                    <ul class="nav" role="tablist">
+                                        <li><a href="36/creez-ou-modifiez-votre-profil">Mon profil</a></li>
+                                        <li class="active"><a href="#panel12" data-toggle="tab" role="tab">Missions disponibles</a></li>
+                                        <li><a href="#panel22" data-toggle="tab" role="tab">Mes candidatures</a></li>
+                                        <!--<li><a href="#panel32" data-toggle="tab" role="tab">Mes tests</a></li>-->
+                                        <li><a href="#panel42" data-toggle="tab" role="tab">Mes contrats</a></li>
+                                        <li><a href="#panel52" data-toggle="tab" role="tab">Mes paiements</a></li>
+                                        <li><a href="37/modifier-votre-mot-de-passe">Modifier mon mot de passe</a></li>
+                                    </ul>
+                                </div>
+                                <style>
+                                    .tab-content .tab-pane ul.list
+                                    {
+                                        display:none;
+                                    }
+                                    .tab-content .tab-pane .pagination li
+                                    {
+                                        display:inline-block;
+                                        padding:5px;
+                                    }
+                                    .select2-container
+                                    {
+                                        width: auto ! important;
+                                        display: inline-block ! important;
+                                        min-width: 327px;
+                                    }
+                                </style>
+                                <div class="col-md-9 col-md-offset form" style="padding-top:0;">
+                                    <div class="tab-content">
+                                        <div class="tab-pane active" role="tabpanel" id="panel12">
+                                            <h2>Offres à pourvoir</h2>
+                                            <select class="selectList1 AESlctList" id="selectSkills" tabindex="-1" aria-hidden="true">
+                                                <option></option>
+                                                <txp:category_list parent="categ1" exclude="categ1" children="0" break="" sort="id asc">
+                                                    <txp:variable name="tmpc" value='<txp:category title="1"/>' />
+                                                    <optgroup label="<txp:variable name="tmpc"/>
+                                                    ">
+                                                    <txp:category_list parent='<txp:category />' exclude='<txp:category />' break="," sort="id asc">
+                                                        <option value="
+                                 <txp:category title="1" />
+                                                        ">
+                                                        <txp:category title="1" />
+                                                        </option>
+                                                    </txp:category_list>
+                                                    </optgroup>
+                                                </txp:category_list>
+                                            </select>
+                                            <p>&nbsp;</p>
+                                            <txp:variable name="dispo">
+                                                <txp:article_custom section="auto-entrepreneur" limit="20" keywords='<txp:variable name="mykeywords"/>'/>
+                                            </txp:variable>
+                                            <txp:if_variable name="dispo" value="">
+                                                <p>Vous ne pouvez pas afficher les annonces appartenant à cette catégorie.<br>
+                                                    Vous ne pouvez visualiser que les annonces liées aux champs de compétences définis dans votre profil Findeur
+                                                </p>
+                                                <txp:else />
+                                                <!-- if variable dispo -->
+                                                <ul class="list">
+                                                    <txp:article_custom section="auto-entrepreneur" limit="20" keywords='<txp:variable name="mykeywords"/>'>
+                                                        <txp:if_keywords>
+                                                            <txp:smd_if field="txpvar:moi_ae" operator="notin" value="?postuler" list_delim=",">
+                                                                <li>
+                                                                    <div class="row">
+                                                                        <div class="col-md-3">
+                                                                            <txp:if_article_image>
+                                                                                <txp:article_image thumbnail="1" width="0" height="0" class="img-responsive img-thumbnail"/>
+                                                                                <txp:else />
+                                                                                <txp:image id="3" width="0" height="0" class="img-responsive img-thumbnail"/>
+                                                                            </txp:if_article_image>
+                                                                        </div>
+                                                                        <div class="col-md-9">
+                                                                            <h3 style="margin-top:0;">
+                                                                                <txp:title />
+                                                                            </h3>
+                                                                            <txp:rss_auto_excerpt length="250" showlinkwithexcerpt="0" overrideexcerpt="1" />
+                                                                            <div class="dropup">
+                                                                                <button class="btn btn-secondary dropdown-toggle pull-right" type="button" id="drop-<txp:article_id/>" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                                                                    Voir détail <span class="caret"></span>
+                                                                                </button>
+                                                                                <div class="dropdown-menu" aria-labelledby="drop-<txp:article_id/>" style="padding:10px;">
+                                                                                    <p>
+                                                                                        <b>Postée depuis:</b>
+                                                                                        <txp:rah_replace from="auparavant" to="">
+                                                                                            <txp:posted format="since" lang="fr" />
+                                                                                        </txp:rah_replace>
+                                                                                    </p>
+                                                                                    <p>
+                                                                                        <b>Département:</b>
+                                                                                        <txp:category1 title="1" />
+                                                                                    </p>
+                                                                                    <p>
+                                                                                        <b>Catégorie:</b>
+                                                                                        <span class="cat">
+                                                         <txp:category_list categories='<txp:keywords />' break=" | ">
+                                                            <txp:category title="1" />
+                                                         </txp:category_list>
+                                                      </span>
+                                                                                    </p>
+                                                                                    <p>
+                                                                                        <b>Mobilité:</b>
+                                                                                        <txp:if_custom_field name="mobilite">
+                                                                                            <txp:category name='<txp:custom_field name="mobilite" />' title="1" />
+                                                                                            <txp:else />
+                                                                                            Non spécifié
+                                                                                        </txp:if_custom_field>
+                                                                                    </p>
+                                                                                    <p><b>Détail</b></p>
+                                                                                    <txp:body/>
+                                                                                    <form method="post">
+                                                                                        <input type="hidden" name="postule_id" value="<txp:article_id />"/>
+                                                                                        <txp:variable name="article_id">
+                                                                                            <txp:article_id />
+                                                                                        </txp:variable>
+                                                                                        <!-- bloquer offres inactives -->
+                                                                                        <txp:smd_query query="SELECT ID, custom_1 FROM textpattern WHERE ID='?article_id'">
+                                                                                            <txp:php>
+                                                                                                $str = "{custom_1}";
+                                                                                                if($str != null) {
+                                                                                                if($str == "inactif") {
+                                                                                                echo '<script>
+                                                                                                $(document).ready(function() {
+                                                                                                    console.log("{ID}");
+                                                                                                    var bouton = document.getElementById("{ID}");
+                                                                                                    bouton.disabled=true;
+                                                                                                    var p = document.createElement(p);
+                                                                                                    p.innerHTML = "<p style=\"color:#f27c36;font-weight:bold;margin-top:10px;\">Suite à un nombre important de candidatures, l\'entreprise a momentanément restreint l\'accès à cette offre.</p>";
+                                                                                                    document.getElementById("{ID}").parentNode.append(p);
+                                                                                                });
+                                                                                            </script>';
+                                                                                                }
+                                                                                                }
+                                                                                            </txp:php>
+                                                                                            <input type="hidden" name="postule_ae" value="<txp:cbe_frontauth_whois />"/>
+                                                                                            <txp:variable name="moi_ae">
+                                                                                                <txp:cbe_frontauth_whois />
+                                                                                            </txp:variable>
+                                                                                            <txp:smd_query query="SELECT user_id FROM txp_users WHERE name='?moi_ae' AND name NOT IN (SELECT AuthorID FROM textpattern)">
+                                                                                                <txp:php>
+                                                                                                    {user_id}
+                                                                                                    if({user_id} != null) {
+                                                                                                    echo '<input onclick="alerte()" type="button" class="btn orange" id="{ID}" name="postule" value="Je Postule" />';
+                                                                                                    echo '<script>
+                                                                                                    $(document).ready(function() {
+                                                                                                        [].forEach.call(document.querySelectorAll(".postule"), function (el) {
+                                                                                                            el.style.visibility = "hidden";
+                                                                                                        });
+                                                                                                    });
+                                                                                                    function alerte() {
+                                                                                                        console.log("alerte");
+                                                                                                        document.getElementById("fenetre_alert").style.visibility="visible";
+                                                                                                        //alert("Vous devez compléter votre profil pour postuler");
+                                                                                                    }
+                                                                                                </script>';
+                                                                                                    }
+                                                                                                </txp:php>
+                                                                                            </txp:smd_query>
+                                                                                        </txp:smd_query>
+                                                                                        <input type="submit" class="btn orange postule" id="<txp:article_id />" name="postule" value="Je Postule" />
+                                                                                    </form>
+                                                                                    <hr>
+                                                                </li>
+                                                            </txp:smd_if>
+                                                        </txp:if_keywords>
+                                                    </txp:article_custom>
+                                                </ul>
+                                                <ul class="pagination"></ul>
+                                            </txp:if_variable>
+                                            <!-- dispo -->
+                                        </div>
+                                        <div class="tab-pane" role="tabpanel" id="panel22">
+                                            <h2>Candidatures déposées</h2>
+                                            <txp:article_custom section="auto-entrepreneur" keywords='<txp:variable name="mykeywords">' limit="20">
+                                                <txp:if_keywords>
+                                                    <txp:smd_if field="txpvar:moi_ae" operator="in" value="?postuler" list_delim=",">
+                                                        <div class="row">
+                                                            <div class="col-md-3">
+                                                                <txp:if_article_image><txp:article_image thumbnail="1" width="0" height="0" class="img-responsive img-thumbnail"/><txp:else /><txp:image id="3" width="0" height="0" class="img-responsive img-thumbnail"/></txp:if_article_image>
+                                                            </div>
+                                                            <div class="col-md-9">
+                                                                <txp:variable name="article_id" value='<txp:article_id />'/>
+                                                                <txp:variable name="moiae" value='<txp:cbe_frontauth_whois />'/>
+                                                                <txp:smd_query query="SELECT AuthorID FROM textpattern WHERE ID='?article_id'">
+                                                                    <txp:smd_query query="SELECT * FROM messagerie WHERE Destinataire='?moiae' AND Envoyeur='{AuthorID}' AND Lu='0' AND Statut='Validé' LIMIT 1">
+                                                                        <txp:php>
+                                                                            $id = "{ID}";
+                                                                            if(!is_null($id) && $id != "") {
+                                                                            echo '<span style="position:absolute;right:14%;"><a href="https://findeur.fr/auto-entrepreneur/{AnnonceID}" style="color:red;" target="_blank" title="Voir annonce">message</a></span><span style="position:absolute;top:-1%;right:5%;"><txp:image id="3586" width="20" height="20"/></span>';
+                                                                            }
+                                                                        </txp:php>
+                                                                    </txp:smd_query>
+                                                                </txp:smd_query>
+                                                                <h3 style="margin-top:0;"><txp:title /></h3>
+                                                                <txp:rss_auto_excerpt length="250" showlinkwithexcerpt="0" overrideexcerpt="1" />
+                                                                <div class="dropup">
+                                                                    <button class="btn btn-secondary dropdown-toggle" type="button" id="drop-<txp:article_id/>" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                                                        Voir détail <span class="caret"></span>
+                                                                    </button>
+                                                                    <div class="dropdown-menu" aria-labelledby="drop-<txp:article_id/>" style="padding:10px;">
+                                                                        <p><b>Postée depuis:</b> <txp:rah_replace from="auparavant" to=""><txp:posted format="since" lang="fr" /></txp:rah_replace></p>
+                                                                        <p><b>Département:</b> <txp:category1 title="1" /></p>
+                                                                        <p><b>Catégorie:</b> <txp:category_list categories='<txp:keywords />' break=" | "><txp:category title="1" /></txp:category_list></p>
+                                                                        <p><b>Mobilité:</b> <txp:if_custom_field name="mobilite"><txp:category name='<txp:custom_field name="mobilite" />' title="1" /><txp:else />Non spécifié</txp:if_custom_field></p>
+                                                                        <p><b>Détail</b></p>
+                                                                        <txp:body/>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        <hr>
+                                                    </txp:smd_if>
+                                                </txp:if_keywords>
+                                            </txp:article_custom>
+                                        </div>
+                                        <div class="tab-pane" role="tabpanel" id="panel32">
+                                            <h2>Mes tests</h2>
+                                            <p>Vous n’avez pas de test en attente pour le moment</p>
+                                        </div>
+                                        <div class="tab-pane" role="tabpanel" id="panel42">
+                                            <h2>Mes contrats</h2>
+                                            <p>Vous n’avez pas de contrat en attente pour le moment</p>
+                                        </div>
+                                        <div class="tab-pane" role="tabpanel" id="panel52">
+                                            <h2>Mes paiements</h2>
+                                            <p>Pour bénéficier de cette fonctionnalité, vous devez vous inscrire sur stripe en suivant le lien ci-dessous. Appelez nous au 01 48 02 56 61 pour plus d’informations</p>
+                                            <txp:php>
+                                                require_once('/home/er1jfgc9/public_html/findeur.fr/stripe/config.php');
+                                                $moiae = variable(array('name' => 'moiae'));
+                                                echo "<p><b>".$moiae."</b></p>";
+                                                define('CLIENT_ID', 'ca_9gN8rMVjJzOj3DPj69BWFHNyzQtIjSy7');
+                                                define('API_KEY', $stripe['secret_key']);
+                                                define('TOKEN_URI', 'https://connect.stripe.com/oauth/token');
+                                                define('AUTHORIZE_URI', 'https://connect.stripe.com/oauth/authorize');
+                                                if (isset($_GET['code'])) { // Redirect w/ code
+                                                $code = $_GET['code'];
+                                                $token_request_body = array(
+                                                'client_secret' => API_KEY,
+                                                'grant_type' => 'authorization_code',
+                                                'client_id' => CLIENT_ID,
+                                                'code' => $code,
+                                                );
+                                                $req = curl_init(TOKEN_URI);
+                                                curl_setopt($req, CURLOPT_RETURNTRANSFER, true);
+                                                curl_setopt($req, CURLOPT_POST, true );
+                                                curl_setopt($req, CURLOPT_POSTFIELDS, http_build_query($token_request_body));
+                                                // TODO: Additional error handling
+                                                $respCode = curl_getinfo($req, CURLINFO_HTTP_CODE);
+                                                $resp = json_decode(curl_exec($req), true);
+                                                curl_close($req);
+                                                if (isset($resp['error'])){
+                                                echo $resp['error_description'];
+                                                }
+                                                if (isset($resp['access_token'])){
+                                                echo $resp['access_token'];
+                                                $table = 'textpattern';
+                                                $set = 'custom_24="'.$resp['stripe_user_id'].'" ,custom_25="'.$resp['refresh_token'].'" ,custom_26="'.$resp['access_token'].'"';
+                                                $where = 'AuthorID="'.$moiae.'"';
+                                                safe_update($table, $set, $where);
+                                                }
+                                                } else if (isset($_GET['error'])) { // Error
+                                                echo $_GET['error_description'];
+                                                } else { // Show OAuth link
+                                                $authorize_request_body = array(
+                                                'response_type' => 'code',
+                                                'scope' => 'read_write',
+                                                'client_id' => CLIENT_ID
+                                                );
+                                                $url = AUTHORIZE_URI . '?' . http_build_query($authorize_request_body);
+                                                echo "<a class='btn orange' href='$url'>Se Connecter avec Stripe</a><br>";
+                                                }
+                                            </txp:php>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </txp:cbe_frontauth_protect>
+        <txp:hide>
+            <!--  ///////////////////////////
+               Stripe ENTREPRISE
+               /////////////////////////// -->
+        </txp:hide>
+        <txp:cbe_frontauth_protect level="5,4">
+            <section class="sectionPageTitle">
+                <div class="container">
+                    <div class="col-sm-8 col-sm-offset-2">
+                        <h1 class="title entrepriseMembreTitle">Espace Membre</h1>
+                        <h2 class="subtitle entrepriseMembreSubtitle">
+                            Bonjour
+                            <span class="coulorange">
+                        <txp:cbe_frontauth_whois type="RealName" />
+                     </span>
+                            <br>Bienvenue dans votre Espace Membre
+                        </h2>
+                        <h2 id="newCandidatures" style="color:red;display:none;">Vous avez des candidatures !</h2>
+                        <span>
+                     <txp:permlink class="btn orange" id="38">Modifier votre mot de passe</txp:permlink>
+                  </span>
+                    </div>
+                </div>
+            </section>
+            <section class="sectionInscription grey-bg padding-bottom">
+                <div class="container">
+                    <div class="col-md-10 col-md-offset-1 inscription-block">
+                        <div class="tab-content">
+                            <!-- VALIDEZ CANDIDATURE AE -->
+                            <txp:smd_if field="postvar:validate_AE,postvar:art_id" operator="isused,isused">
+                                <div class="alert alert-success">
+                                    <txp:php>
+                                        if (isset($_POST['ae']) AND $_POST['ae']<>'')
+                                        {
+                                        $exce = implode(",", $_POST['ae']);
+                                        echo "Candidature(s) de : ".$exce." validée(s)";
+                                        $exce = variable(array(name => 'valider_ae', value => $exce));
+                                        } else {
+                                        echo "Sélection vide";
+                                        }
+                                    </txp:php>
+                                    <txp:variable name="titre">
+                                        <txp:article_custom id='{smd_if_art_id}'>
+                                            <txp:title />
+                                        </txp:article_custom>
+                                    </txp:variable>
+                                    <txp:if_variable name="valider_ae">
+                                        <txp:variable name="vava">
+                                            <txp:article_custom id='{smd_if_art_id}'>
+                                                <txp:custom_field name="valider" />
+                                            </txp:article_custom>
+                                        </txp:variable>
+                                        <txp:if_variable name="vava" value="">
+                                            <txp:smd_query query="UPDATE textpattern set custom_28='?valider_ae' WHERE ID='?art_id'"/>
+                                            <txp:else />
+                                            <txp:variable name="valider_ae1">
+                                                <txp:variable name="vava"/>
+                                                ,
+                                                <txp:variable name="valider_ae"/>
+                                            </txp:variable>
+                                            <txp:smd_query query="UPDATE textpattern set custom_28='?valider_ae1' WHERE ID='?art_id'"/>
+                                        </txp:if_variable>
+                                        <txp:rah_repeat value='<txp:variable name="valider_ae"/>'>
+                                            <txp:variable name="rahvalue1">
+                                                <txp:rah_repeat_value />
+                                            </txp:variable>
+                                            <txp:variable name="lienprofil">
+                                                <txp:article_custom author='<txp:rah_repeat_value />' section="particulier-entreprise" limit="1">
+                                                    <txp:permlink />
+                                                </txp:article_custom>
+                                            </txp:variable>
+                                            <txp:smd_query query="SELECT email,RealName from txp_users WHERE name='?rahvalue1'">
+                                                <!-- Mail vers AE -->
+                                                <txp:php>
+                                                    $lien = permlink(array(id => '{smd_if_art_id}'));
+                                                    $titre = variable(array(name=>'titre'));
+                                                    $lienprofil = variable(array(name=>'lienprofil'));
+                                                    $message = "";
+                                                    $message .= "Bonjour {RealName},\r\n\r\nNous avons le plaisir de vous annoncer qu’après avoir consulté votre profil (".$lienprofil." ), l’entreprise cliente a retenu votre candidature pour la mission [".$titre."] à laquelle vous avez postulé.\r\n\r\nContactez l’entreprise dès maintenant pour finaliser le processus en vous connectant sur ";
+                                                    $message .= $lien."\r\n\r\n";
+                                                    $message .= "Très bonne continuation !\r\nL'équipe Findeur.";
+                                                    $subj = "FÉLICITATIONS ! Votre candidature est retenue !";
+                                                    $headers = "Content-Type: text/plain;charset=utf-8\r\n".'From: info@findeur.fr'."\r\n".'Reply-To: info@findeur.fr'."\r\n".'X-Mailer: PHP/'.phpversion();
+                                                    // Envoi du mail
+                                                    mail('{email}', $subj, $message, $headers);
+                                                </txp:php>
+                                                <!-- Mail vers Findeur -->
+                                                <txp:php>
+                                                    $lien = permlink(array(id => '{smd_if_art_id}'));
+                                                    $titre = variable(array(name=>'titre'));
+                                                    $lienprofil = variable(array(name=>'lienprofil'));
+                                                    $ae = variable(array(name=>'rahvalue1'));
+                                                    $message = "";
+                                                    $message .= " Mise en relation de ".$ae." ( ".$lienprofil." )\r\n pour la mission ".$lien." [".$titre."] - ID = {smd_if_art_id}\r\n";
+                                                    $subj = "Mise en relation";
+                                                    $headers = "Content-Type: text/plain;charset=utf-8\r\n".'From: info@findeur.fr'."\r\n".'Reply-To: info@findeur.fr'."\r\n".'X-Mailer: PHP/'.phpversion();
+                                                    // Envoi du mail
+                                                    mail('info@findeur.fr', $subj, $message, $headers);
+                                                </txp:php>
+                                                <p>
+                                                    Email envoyé à
+                                                    <txp:rah_repeat_value />
+                                                </p>
+                                            </txp:smd_query>
+                                        </txp:rah_repeat>
+                                    </txp:if_variable>
+                                </div>
+                            </txp:smd_if>
+                            <!-- Supprime Annonce (Masquer) -->
+                            <txp:smd_if field="postvar:suppr,postvar:art_id" operator="isused,isused">
+                                <div class="alert alert-success">
+                                    <txp:variable name="moimeme">
+                                        <txp:article_custom id='{smd_if_art_id}'>
+                                            <txp:author title="0" />
+                                        </txp:article_custom>
+                                    </txp:variable>
+                                    <txp:if_variable name="moimeme" value='<txp:cbe_frontauth_whois />'>
+                                        <txp:smd_query query="UPDATE textpattern set Status='2' WHERE ID='?art_id'"/>
+                                        <p>Article {smd_if_art_id} supprimé</p>
+                                        <txp:else/>
+                                        <p>Désolé l'opération a échoué</p>
+                                    </txp:if_variable>
+                                </div>
+                            </txp:smd_if>
+                            <!-- Désactiver Annonce -->
+                            <txp:smd_if field="postvar:desactivannonce,postvar:art_id" operator="isused,isused">
+                                <div class="alert alert-success">
+                                    <txp:variable name="moimeme">
+                                        <txp:article_custom id='{smd_if_art_id}'>
+                                            <txp:author title="0" />
+                                        </txp:article_custom>
+                                    </txp:variable>
+                                    <txp:if_variable name="moimeme" value='<txp:cbe_frontauth_whois />'>
+                                        <txp:smd_query query="UPDATE textpattern set custom_1='inactif' WHERE ID='?art_id'"/>
+                                        <p>Article {smd_if_art_id} désactivé</p>
+                                        <txp:else/>
+                                        <p>Désolé l'opération a échoué</p>
+                                    </txp:if_variable>
+                                </div>
+                            </txp:smd_if>
+                            <!-- Activer Annonce -->
+                            <txp:smd_if field="postvar:activannonce,postvar:art_id" operator="isused,isused">
+                                <div class="alert alert-success">
+                                    <txp:variable name="moimeme">
+                                        <txp:article_custom id='{smd_if_art_id}'>
+                                            <txp:author title="0" />
+                                        </txp:article_custom>
+                                    </txp:variable>
+                                    <txp:if_variable name="moimeme" value='<txp:cbe_frontauth_whois />'>
+                                        <txp:smd_query query="UPDATE textpattern set custom_1='actif' WHERE ID='?art_id'"/>
+                                        <p>Article {smd_if_art_id} activé</p>
+                                        <txp:else/>
+                                        <p>Désolé l'opération a échoué</p>
+                                    </txp:if_variable>
+                                </div>
+                            </txp:smd_if>
+                            <!-- Envoi de QCM aux AE -->
+                            <txp:if_variable name="qcmsend">
+                                <div class="alert alert-success">
+                                    <txp:if_variable name="client" value='<txp:cbe_frontauth_whois />'>
+                                        <txp:rah_repeat value='<txp:variable name="mesae1"/>'>
+                                            <txp:variable name="rahvalue">
+                                                <txp:rah_repeat_value />
+                                            </txp:variable>
+                                            <txp:smd_query query="SELECT email from txp_users WHERE name='?rahvalue'">
+                                                <txp:php>
+                                                    $message = "";
+                                                    $exce = explode(",", $_POST['cattest1']);
+                                                    $message .= "Bonjour\r\nCes tests ci-dessous vous ont été envoyé\r\nCliquez sur les liens pour effectuer chaque test\r\n\r\n";
+                                                    foreach($exce as $key => $value) {
+                                                    $message .= $value."?clientid=".cbe_frontauth_whois(array())."\r\n";
+                                                    }
+                                                    $message .= "Cordialement\r\nL'équipe Findeur.";
+                                                    $subj = "Test QCM envoyé par".cbe_frontauth_whois(array());
+                                                    $headers = "Content-Type: text/plain;charset=utf-8\r\n".'From: info@findeur.fr'."\r\n".'Reply-To: info@findeur.fr'."\r\n".'X-Mailer: PHP/'.phpversion();
+                                                    // Envoi du mail
+                                                    mail('{email}', $subj, $message, $headers);
+                                                </txp:php>
+                                                <p>
+                                                    Test envoyé à
+                                                    <txp:rah_repeat_value />
+                                                </p>
+                                                <txp:else />
+                                                <p>Erreur de données</p>
+                                            </txp:smd_query>
+                                        </txp:rah_repeat>
+                                        <txp:else />
+                                        <p>Il y a un problème d'authentification</p>
+                                    </txp:if_variable>
+                                </div>
+                            </txp:if_variable>
+                            <txp:variable name="moientreprise" value='<txp:cbe_frontauth_whois />'/>
+                            <div class="row">
+                                <div class="col-md-3 information">
+                                    <ul class="nav" role="tablist">
+                                        <li class="active"><a href="#panel11" data-toggle="tab" role="tab">Mes annonces</a></li>
+                                        <li>
+                                            <a href="#panel21" data-toggle="tab" role="tab">
+                                                Mes candidats (
+                                                <span id="nbCandidats1" style="color:red;">
+                                       <txp:smd_query query="SELECT GROUP_CONCAT(custom_27) AS data FROM textpattern WHERE AuthorID='?moientreprise' AND Status=4 AND LENGTH(custom_27) > 0">
+                                          <txp:php>
+                                             $data1 = explode(",", "{data}");
+                                             echo count(array_filter($data1));
+                                          </txp:php>
+                                       </txp:smd_query>
+                                    </span>
+                                                )
+                                            </a>
+                                        </li>
+                                        <script>
+                                            var str = $("#nbCandidats1").text();
+                                            // console.log(str);
+
+                                            if(str != "0") {
+                                                // console.log("data : " + str);
+                                                document.getElementById("newCandidatures").style.display = "";
+                                            }
+                                        </script>
+                                        <li><a href="#panel31" data-toggle="tab" role="tab">Mes tests</a></li>
+                                        <!--<li><a href="#panel41" data-toggle="tab" role="tab">Mes contrats</a></li>
+                                           <li><a href="#panel51" data-toggle="tab" role="tab">Mes paiements</a></li>-->
+                                    </ul>
+                                </div>
+                                <div class="col-md-9 col-md-offset form entreprisePageAnnonce" style="padding-top:0;">
+                                    <div class="tab-content">
+                                        <div class="tab-pane active" role="tabpanel" id="panel11">
+                                            <h2>Mes annonces publiées</h2>
+                                            <txp:article_custom section="auto-entrepreneur" limit="99" author='<txp:cbe_frontauth_whois />'>
+                                                <div class="row">
+                                                    <div class="col-md-3 entrepriseContainImg">
+                                                        <txp:if_article_image>
+                                                            <txp:article_image thumbnail="1" width="0" height="0" class="img-responsive img-thumbnail entrepriseImgResp"/>
+                                                            <txp:else />
+                                                            <txp:image id="3" width="0" height="0" class="img-responsive img-thumbnail entrepriseImgResp"/>
+                                                        </txp:if_article_image>
+                                                    </div>
+                                                    <div class="col-md-9 entrepriseContainAnnonce">
+                                                        <txp:if_custom_field name="categ" value="inactif">
+                                                            <h3 style="color:#999;margin-top:0;">
+                                                                <txp:title />
+                                                                <span class="label label-warning">DÉSACTIVÉ</span>
+                                                            </h3>
+                                                            <txp:else />
+                                                            <h3 style="margin-top:0;">
+                                                                <txp:title />
+                                                            </h3>
+                                                        </txp:if_custom_field>
+                                                        <div class="row ligneBtnDetails">
+                                                            <txp:rss_auto_excerpt length="250" showlinkwithexcerpt="0" overrideexcerpt="1" />
+                                                            <div class="col-md-12">
+                                                                <div class="btn-group dropup pull-right" style="display:block;">
+                                                                    <button class="btn btn-secondary dropdown-toggle pull-right entrepriseBtnDetail" type="button" id="drop-<txp:article_id/>" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Voir détail <span class="caret"></span></button>
+                                                                    <div class="dropdown-menu" aria-labelledby="drop-<txp:article_id/>" style="padding:10px;min-width:300px;">
+                                                                        <p>
+                                                                            <b>Postée depuis:</b>
+                                                                            <txp:rah_replace from="auparavant" to="">
+                                                                                <txp:posted format="since" lang="fr" />
+                                                                            </txp:rah_replace>
+                                                                        </p>
+                                                                        <p>
+                                                                            <b>Département:</b>
+                                                                            <txp:category1 title="1" />
+                                                                        </p>
+                                                                        <p>
+                                                                            <b>Catégorie:</b>
+                                                                            <txp:category_list categories='<txp:keywords />' break=" | ">
+                                                                                <txp:category title="1" />
+                                                                            </txp:category_list>
+                                                                        </p>
+                                                                        <p>
+                                                                            <b>Mobilité:</b>
+                                                                            <txp:if_custom_field name="mobilite">
+                                                                                <txp:category name='<txp:custom_field name="mobilite" />' title="1" />
+                                                                                <txp:else />
+                                                                                Non spécifié
+                                                                            </txp:if_custom_field>
+                                                                        </p>
+                                                                        <p><b>Détail</b></p>
+                                                                        <txp:body/>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        <div class="row">
+                                                            <div class="col-lg-3 col-md-1 col-sm-2 col-xs-4">
+                                                                <form method="post" style="display:inline-block;vertical-align:top;">
+                                                                    <input type="hidden" name="art_id" value="<txp:article_id />"/>
+                                                                    <input type="submit" class="btn orange btn-sm entrepriseBtnOrange" name="suppr" value="Supprimer" />
+                                                                </form>
+                                                            </div>
+                                                            <txp:if_custom_field name="categ" value="inactif">
+                                                                <div class="col-lg-3 col-md-1 col-sm-2 col-xs-4">
+                                                                    <form method="post" style="display:inline-block;">
+                                                                        <input type="hidden" name="art_id" value="<txp:article_id />"/>
+                                                                        <input type="submit" class="btn orange btn-sm entrepriseBtnOrange" name="activannonce" value="Activer" />
+                                                                    </form>
+                                                                </div>
+                                                                <txp:else />
+                                                                <div class="col-lg-3 col-md-1 col-sm-2 col-xs-4">
+                                                                    <form method="post" style="display:inline-block;">
+                                                                        <input type="hidden" name="art_id" value="<txp:article_id />"/>
+                                                                        <input type="submit" class="btn orange btn-sm entrepriseBtnOrange" name="desactivannonce" value="Désactiver" />
+                                                                    </form>
+                                                                </div>
+                                                            </txp:if_custom_field>
+                                                            <div class="col-lg-3 col-md-1 col-sm-2 col-xs-4">
+                                                                <form method="post" action="<txp:permlink id="2810"/>" style="display:inline-block;">
+                                                                <input type="hidden" name="art_id" value="<txp:article_id />"/>
+                                                                <input type="submit" class="btn orange btn-sm entrepriseBtnModif" name="modannonce" value="Modifier" />
+                                                                </form>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <hr>
+                                            </txp:article_custom>
+                                            <p>
+                                                <txp:permlink id="39" class="btn orange btn-lg btn-block">Poster une annonce</txp:permlink>
+                                            </p>
+                                        </div>
+                                        <div class="tab-pane" role="tabpanel" id="panel21">
+                                            <h2>Mes candidats</h2>
+                                            <txp:article_custom section="auto-entrepreneur" limit="99" author='<txp:cbe_frontauth_whois />'>
+                                                <div class="row" style="margin-bottom:2vw">
+                                                    <div class="col-md-3 entrepriseCandidatContainImg">
+                                                        <txp:if_article_image>
+                                                            <txp:article_image thumbnail="1" width="140" height="140" class="img-responsive img-thumbnail entrepriseCandidatImgResp"/>
+                                                            <txp:else />
+                                                            <txp:image id="3" width="140" height="140" class="img-responsive img-thumbnail"/>
+                                                        </txp:if_article_image>
+                                                    </div>
+                                                    <div class="col-md-9">
+                                                        <txp:if_custom_field name="categ" value="inactif">
+                                                            <h3 style="color:#999;margin-top:0;">
+                                                                <txp:title />
+                                                                <span class="label label-warning">DÉSACTIVÉE</span>
+                                                            </h3>
+                                                            <txp:else />
+                                                            <h3 class="EntrepriseCandidatTitreAnnonce" style="margin-top:0;">
+                                                                <txp:title />
+                                                            </h3>
+                                                        </txp:if_custom_field>
+                                                        <txp:rss_auto_excerpt length="250" showlinkwithexcerpt="0" overrideexcerpt="1" />
+                                                        <txp:variable name="article_id" value='<txp:article_id/>'/>
+                                                        <txp:smd_query query="SELECT ID, custom_27 FROM textpattern WHERE ID='?article_id'">
+                                                            <txp:php>
+                                                                $res = "{custom_27}";
+                                                                $postulants = explode(",", $res);
+                                                                echo '
+                                                                <h3 class="lever entrepriseCandidatList" id="{ID}" style="cursor:pointer;border-radius:4px;    background-color:buttonface;text-align:center;padding-top:2%;" onclick="deroule(event)">Candidatures à valider (<span id="{ID}" style="color:red;">' . count(array_filter($postulants)) . '</span>) <span class="caret" id="{ID}"></span></h3>
+                                                                ';
+                                                            </txp:php>
+                                                        </txp:smd_query>
+                                                    </div>
+                                                    <style>
+                                                        .aligned-row {
+                                                            display: flex;
+                                                            flex-flow: row wrap;
+
+                                                        &::before {
+                                                             display: block;
+                                                         }
+                                                        }
+
+                                                    </style>
+
+                                                    <div class="col-md-12" id="<txp:article_id/>" style="margin-top:15px;">
+                                                        <div class="toggle" id="postulants-<txp:article_id/>" style="display:none;">
+                                                            <form method="POST" class="valae">
+                                                                <div class="row aligned-row">
+                                                                    <txp:variable name="premium"><txp:custom_field name="premium"/></txp:variable>
+                                                                    <txp:variable name="ida"><txp:article_id /></txp:variable>
+                                                                    <txp:variable name="valider_ae" value='<txp:custom_field name="valider" />'/>
+                                                                    <txp:variable name="refuser_ae" value='<txp:custom_field name="refuser" />'/>
+                                                                    <txp:variable name="postuler_ae" value='<txp:custom_field name="postuler" />'/>
+                                                                    <txp:php>
+                                                                        $postuler = explode(",",variable(array(name => 'postuler_ae')));
+                                                                        $valider = explode(",",variable(array(name => 'valider_ae')));
+                                                                        $refuser = explode(",",variable(array(name => 'refuser_ae')));
+
+                                                                        $postuler1 = array_diff($postuler, $valider, $refuser);
+                                                                        $ordonne = implode(",", $postuler1).",".variable(array(name => 'valider_ae')).",".variable(array(name => 'refuser_ae'));
+                                                                        variable(array(name => "ordonne_ae", value => $ordonne ));
+
+
+                                                                    </txp:php>
+
+                                                                    <txp:rah_repeat value='<txp:variable name="ordonne_ae"/>'>
+                                                                        <txp:variable name="moientreprise" value='<txp:cbe_frontauth_whois />'/>
+                                                                        <txp:variable name="rahvalue1"><txp:rah_repeat_value /></txp:variable>
+
+                                                                        <txp:if_variable name="rahvalue1" value="">
+                                                                            <txp:else />
+                                                                            <txp:article_custom author='<txp:rah_repeat_value />' limit="1" section="particulier-entreprise">
+                                                                                <txp:variable name="rah_value" value='<txp:rah_repeat_value />'/>
+                                                                                <txp:smd_if field="txpvar:rah_value" operator="in" value="txpvar:valider_ae" list_delim=",">
+                                                                                    <div class="col-md-4 col-xs-12" style="margin-bottom:10px;">
+                                                                                        <div class="col-md-12" style="border:1px solid #f27c36;border-radius:4px;height:100%;">
+                                                                                            <txp:smd_query query="SELECT * FROM messagerie WHERE Destinataire='?moientreprise' AND Envoyeur='?rah_value' AND Lu='0' AND Statut='Validé' LIMIT 1">
+                                                                                                <txp:php>
+                                                                                                    $id = "{ID}";
+                                                                                                    if(!is_null($id) && $id != "") {
+                                                                                                    echo '<span style="position:absolute;right:14%;font-size:100%;color:red;">message</span>';
+                                                                                                    }
+                                                                                                </txp:php>
+                                                                                            </txp:smd_query>
+                                                                                            <txp:article_custom section="particulier-entreprise" limit="20" author='<txp:rah_repeat_value />'>
+
+                                                                                                <div class="col-md-12" style="margin-top:10px;">
+                                                                                                    <txp:if_article_image>
+                                                                                                        <txp:article_image thumbnail="1" width="0" height="0" class="img-responsive img-thumbnail"/>
+                                                                                                        <txp:else />
+                                                                                                        <txp:image id="3" width="0" height="0" class="img-responsive img-thumbnail"/>
+                                                                                                    </txp:if_article_image>
+
+                                                                                                    <txp:smd_query query="SELECT custom_11, custom_12 FROM textpattern WHERE AuthorID='?rah_value'">
+                                                                                                        <h3 style="margin-top:10px;margin-bottom:10px;overflow:hidden;text-overflow:ellipsis;font-size:0.8em;">
+                                                                                                            <txp:if_variable name="premium" value="1">
+                                                                                                                <txp:php>
+                                                                                                                    $nom = "{custom_11}";
+                                                                                                                    $prenom = "{custom_12}";
+                                                                                                                    echo $prenom." .".substr($nom, 0, 1);
+                                                                                                                </txp:php>
+                                                                                                                <txp:else />
+                                                                                                                {custom_12} {custom_11}
+                                                                                                            </txp:if_variable>
+                                                                                                        </h3>
+                                                                                                    </txp:smd_query>
+                                                                                                    <h3 style="margin-top:10px;margin-bottom:10px;overflow:hidden;text-overflow:ellipsis;font-size:0.8em;">
+                                                                                                        <txp:title />
+                                                                                                    </h3>
+                                                                                                    <a href="<txp:permlink/>?ida=<txp:variable name="ida" />" class="btn btn-link" target="_blank" title="Voir profil">Voir Profil</a>
+                                                                                                </div>
+
+                                                                                                <txp:smd_if field="txpvar:rahvalue1" operator="in" value="txpvar:valider_ae" list_delim=",">
+                                                                                                    <p style="margim:0;padding:0 5px;position:absolute;color:#FFF;background-color:green;top:0;right:0;">VALIDÉ</p>
+                                                                                                    <txp:else />
+                                                                                                    <txp:smd_if field="txpvar:rahvalue1" operator="in" value="txpvar:refuser_ae" list_delim=",">
+                                                                                                        <p style="margim:0;padding:0 5px;position:absolute;color:#FFF;background-color:red;top:0;right:0;">REFUSÉ</p>
+                                                                                                        <txp:else />
+                                                                                                        <p style="margim:0;padding:0 5px;position:absolute;color:#FFF;background-color:#666;top:0;right:0;">EN ATTENTE DE VALIDATION</p>
+                                                                                                    </txp:smd_if>
+                                                                                                </txp:smd_if>
+
+                                                                                            </txp:article_custom>
+                                                                                        </div>
+                                                                                    </div>
+                                                                                    <txp:else />
+                                                                                    <div class="col-md-4 col-xs-12" style="margin-bottom:10px;">
+                                                                                        <div class="col-md-12" style="border:1px solid #f27c36;border-radius:4px;height:100%;">
+                                                                                            <txp:smd_query query="SELECT * FROM messagerie WHERE Destinataire='?moientreprise' AND Envoyeur='?rah_value' AND Lu='0' AND Statut='Validé' LIMIT 1">
+                                                                                                <txp:php>
+                                                                                                    $id = "{ID}";
+                                                                                                    if(!is_null($id) && $id != "") {
+                                                                                                    echo '<span style="position:absolute;right:14%;font-size:100%;color:red;">message</span>';
+                                                                                                    }
+                                                                                                </txp:php>
+                                                                                            </txp:smd_query>
+                                                                                            <txp:article_custom section="particulier-entreprise" limit="20" author='<txp:rah_repeat_value />'>
+
+                                                                                                <div class="col-md-12" style="margin-top:10px;">
+                                                                                                    <txp:if_article_image>
+                                                                                                        <txp:article_image thumbnail="1" width="0" height="0" class="img-responsive img-thumbnail"/>
+                                                                                                        <txp:else />
+                                                                                                        <txp:image id="3" width="0" height="0" class="img-responsive img-thumbnail"/>
+                                                                                                    </txp:if_article_image>
+
+                                                                                                    <txp:smd_query query="SELECT custom_11, custom_12 FROM textpattern WHERE AuthorID='?rah_value'">
+                                                                                                        <h3 style="margin-top:10px;margin-bottom:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:0.8em;">
+                                                                                                            <txp:if_variable name="premium" value="1">
+                                                                                                                <txp:php>
+                                                                                                                    $nom = "{custom_11}";
+                                                                                                                    $prenom = "{custom_12}";
+                                                                                                                    echo $prenom." .".substr($nom, 0, 1);
+                                                                                                                </txp:php>
+                                                                                                                <txp:else />
+                                                                                                                {custom_12} {custom_11}
+                                                                                                            </txp:if_variable>
+                                                                                                        </h3>
+                                                                                                    </txp:smd_query>
+                                                                                                    <h3 style="margin-top:10px;margin-bottom:10px;overflow:hidden;text-overflow:ellipsis;font-size:0.8em;">
+                                                                                                        <txp:title />
+                                                                                                    </h3>
+                                                                                                    <a href="<txp:permlink/>?ida=<txp:variable name="ida" />" class="btn btn-link" target="_blank" title="Voir profil">Voir Profil</a>
+                                                                                                </div>
+
+                                                                                                <txp:smd_if field="txpvar:rahvalue1" operator="in" value="txpvar:valider_ae" list_delim=",">
+                                                                                                    <p style="margim:0;padding:0 5px;position:absolute;color:#FFF;background-color:green;top:0;right:0;">VALIDÉ</p>
+                                                                                                    <txp:else />
+                                                                                                    <txp:smd_if field="txpvar:rahvalue1" operator="in" value="txpvar:refuser_ae" list_delim=",">
+                                                                                                        <p style="margim:0;padding:0 5px;position:absolute;color:#FFF;background-color:red;top:0;right:0;">REFUSÉ</p>
+                                                                                                        <txp:else />
+                                                                                                        <p style="margim:0;padding:0 5px;position:absolute;color:#FFF;background-color:#666;top:0;right:0;">EN ATTENTE DE VALIDATION</p>
+                                                                                                    </txp:smd_if>
+                                                                                                </txp:smd_if>
+
+                                                                                            </txp:article_custom>
+                                                                                        </div>
+                                                                                    </div>
+                                                                                </txp:smd_if>
+                                                                            </txp:article_custom>
+                                                                        </txp:if_variable>
+                                                                    </txp:rah_repeat>
+                                                                    <input type="hidden" name="art_id" value="<txp:article_id />"/>
+                                                                </div>
+                                                            </form>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <script type="text/javascript">
+                                                    //$(document).ready(function() {
+                                                    //var toggle = 0;
+
+                                                    function deroule(event) {
+                                                        var id = event.target.id || event.srcElement.id;
+                                                        console.log(id);
+                                                        if($('#postulants-' + id).is(":visible")) {
+                                                            console.log("visible");
+                                                            document.getElementById('postulants-' + id).style.display="none";
+                                                        } else {
+                                                            console.log("caché");
+                                                            document.getElementById('postulants-' + id).style.display="";
+                                                        }
+                                                    }
+                                                    //});
+
+                                                </script>
+                                            </txp:article_custom>
+                                        </div>
+                                        <script type="text/javascript">
+                                            $("form.valae .validae").attr('disabled','disabled');
+                                            $("form.valae input:checkbox").each(function(i){$( this ).nextAll('input.validae').first().removeAttr('disabled')});
+                                        </script>
+                                        <div class="tab-pane" role="tabpanel" id="panel31">
+                                            <h2>Mes tests</h2>
+                                            <form method="POST">
+                                                <div class="form-group entrepriseTestCandidat">
+                                                    <label>Choisir les candidats à tester</label>
+                                                    <select id="mesae1" multiple class="form-control">
+                                                        <txp:article_custom section="auto-entrepreneur" author='<txp:cbe_frontauth_whois />'>
+                                                            <optgroup label="<txp:article_id/> - <txp:title />" >
+                                                                <txp:rah_repeat value='<txp:custom_field name="postuler"/>'>
+                                                                    <option value="<txp:rah_repeat_value />">
+                                                                        <txp:rah_repeat_value />
+                                                                    </option>
+                                                                </txp:rah_repeat>
+                                                            </optgroup>
+                                                        </txp:article_custom>
+                                                    </select>
+                                                </div>
+                                                <div class="form-group entrepriseChoixTest">
+                                                    <label>Choisissez vos tests</label>
+                                                    <select id="cattest" multiple class="form-control">
+                                                        <txp:article_custom section="site" category="qcm" limit="99">
+                                                            <option value="<txp:permlink />">
+                                                                <txp:title />
+                                                            </option>
+                                                        </txp:article_custom>
+                                                    </select>
+                                                </div>
+                                                <input type="hidden" name="client" value="<txp:cbe_frontauth_whois />" />
+                                                <input type="hidden" name="mesae1" id="inputmesae1" value="" />
+                                                <input type="hidden" name="cattest1" id="inputcattest1" value="" />
+                                                <input type="submit" class="btn orange" name="qcmsend" value="Envoi" />
+                                            </form>
+                                        </div>
+                                        <div class="tab-pane" role="tabpanel" id="panel41">
+                                            <h2>Mes contrats</h2>
+                                            <!-- <ul class="list-group">
+                                               <txp:article_custom section="site" category="telechargement" limit="99">
+                                                 <li class="list-group-item"><span class="badge"><txp:permlink style="color:#FFF;">Voir</txp:permlink></span><txp:title /></li>
+                                               </txp:article_custom>
+                                               </ul> -->
+                                            <p>Vous n'avez pas de contrat disponible pour le moment</p>
+                                        </div>
+                                        <div class="tab-pane" role="tabpanel" id="panel51">
+                                            <h2>Mes paiements</h2>
+                                            <txp:variable name="moientreprise" value='<txp:cbe_frontauth_whois />'/>
+                                            <txp:if_variable name="moientreprise" value="tarik.boutoustou-6666">
+                                                <txp:smd_if field="postvar:stripeToken" operator="undefined">
+                                                    <p>Effectuer un payement avec Stripe</p>
+                                                    <script type="text/javascript" src="https://js.stripe.com/v2/"></script>
+                                                    <div class="row">
+                                                        <form method="POST" id="payment-form" class="col-sm-8">
+                                                            <span class="payment-errors"></span>
+                                                            <div class="form-group">
+                                                                <label>
+                                                                    <input type="radio" name="ae" value="acct_19TUNZHLbiCRjD0r"> stripe.test-bis-58
+                                                                </label>
+                                                            </div>
+                                                            <div class="col-sm-12">
+                                                                <div class="form-group">
+                                                                    <label>
+                                                                        <span>Carte Numéro</span></label>
+                                                                    <input type="text" size="20" data-stripe="number" class="form-control">
+                                                                </div>
+                                                            </div>
+                                                            <div class="form-group">
+                                                                <div class="col-sm-4">
+                                                                    <label>
+                                                                        <span>Expiration MM</span>
+                                                                    </label>
+                                                                    <input type="text" size="2" data-stripe="exp_month" class="form-control">
+                                                                </div>
+                                                                <div class="col-sm-4">
+                                                                    <label>
+                                                                        <span>YY</span>
+                                                                    </label>
+                                                                    <input type="text" size="2" data-stripe="exp_year" class="form-control">
+                                                                </div>
+                                                                <div class="col-sm-4">
+                                                                    <label>
+                                                                        <span>CVC</span></label>
+                                                                    <input type="text" size="4" data-stripe="cvc" class="form-control">
+                                                                </div>
+                                                            </div>
+                                                            <div class="col-sm-6">
+                                                                <div class="form-group">
+                                                                    <label>
+                                                                        <span>Code Postal</span></label>
+                                                                    <input type="text" size="6" data-stripe="address_zip" class="form-control">
+                                                                </div>
+                                                            </div>
+                                                            <div class="col-sm-6">
+                                                                <div class="form-group">
+                                                                    <label>
+                                                                        <span>Montant</span></label>
+                                                                    <input type="number" size="10" name="montant" id="mont" class="form-control">
+                                                                </div>
+                                                            </div>
+                                                            <input type="submit" class="btn orange" value="Soumettre le payement"/>
+                                                        </form>
+                                                    </div>
+                                                    <script type="text/javascript">
+                                                        Stripe.setPublishableKey('pk_test_6gd83gp5GAFqhLSLH0iODR7x');
+
+                                                        $(function() {
+                                                            var $form = $('#payment-form');
+                                                            $form.submit(function(event) {
+                                                                // Disable the submit button to prevent repeated clicks:
+                                                                $form.find('.submit').prop('disabled', true);
+
+                                                                // Request a token from Stripe:
+                                                                Stripe.card.createToken($form, stripeResponseHandler);
+
+                                                                // Prevent the form from being submitted:
+                                                                return false;
+                                                            });
+                                                        });
+
+                                                        function stripeResponseHandler(status, response) {
+                                                            // Grab the form:
+                                                            var $form = $('#payment-form');
+
+                                                            if (response.error) { // Problem!
+
+                                                                // Show the errors on the form:
+                                                                $form.find('.payment-errors').text(response.error.message);
+                                                                $form.find('.submit').prop('disabled', false); // Re-enable submission
+
+                                                            } else { // Token was created!
+
+                                                                // Get the token ID:
+                                                                var token = response.id;
+
+                                                                // Insert the token ID into the form so it gets submitted to the server:
+                                                                // var amounte = $("#mont").val() * 100;
+                                                                // $form.append($('<input type="hidden" data-stripe="mount">').val(amounte));
+                                                                $form.append($('<input type="hidden" name="stripeToken">').val(token));
+
+                                                                // Submit the form:
+                                                                $form.get(0).submit();
+                                                            }
+                                                        };
+                                                    </script>
+                                                    <txp:else />
+                                                    <!-- smd_if -->
+                                                    <script type="text/javascript">
+                                                        $(".tabs-content>div.active").removeClass("active");
+                                                        $(".tabs-content>div#panel51").addClass("active");
+                                                        $(".tabs>dd.active").removeClass("active");
+                                                        $(".tabs>dd a[href=#panel51]").parent().addClass("active");
+                                                    </script>
+                                                    <txp:php>
+                                                        require('/home/er1jfgc9/public_html/findeur.fr/stripe/config.php');
+                                                        if (isset($_POST['stripeToken'])){
+                                                        $token  = $_POST['stripeToken'];
+                                                        if (isset($_POST['montant'])){
+                                                        $mont = floatval($_POST['montant']);
+                                                        $mont100 = $mont*100;
+                                                        } else {
+                                                        $mont = 10;
+                                                        $mont100 = 1000;
+                                                        }
+                                                        if (isset($_POST['ae'])){
+                                                        // echo "
+                                                        <p>Nom de l'AE : ".$_POST['nom']."</p>
+                                                        ";
+                                                        // $ae = $_POST['nom']." ".$_POST['prenom']." ".$_POST['email'];
+                                                        $ae = $_POST['ae'];
+                                                        }
+                                                        echo $_POST['montant']." || ".$mont100;
+                                                        try {
+                                                        $charge = \Stripe\Charge::create(
+                                                        array(
+                                                        "amount" => $mont100,
+                                                        "currency" => "eur",
+                                                        "source" => $token,
+                                                        "description" => $ae,
+                                                        "application_fee" => $mont
+                                                        ),
+                                                        array("stripe_account" => $ae)
+                                                        );
+                                                        } catch(\Stripe\Error\Card $e) {
+                                                        // Since it's a decline, \Stripe\Error\Card will be caught
+                                                        $body = $e->getJsonBody();
+                                                        $err  = $body['error'];
+                                                        print('Status is:' . $e->getHttpStatus() . "\n");
+                                                        print('Type is:' . $err['type'] . "\n");
+                                                        print('Code is:' . $err['code'] . "\n");
+                                                        // param is '' in this case
+                                                        print('Param is:' . $err['param'] . "\n");
+                                                        print('Message is:' . $err['message'] . "\n");
+                                                        } catch (\Stripe\Error\RateLimit $e) {
+                                                        // Too many requests made to the API too quickly
+                                                        } catch (\Stripe\Error\InvalidRequest $e) {
+                                                        // Invalid parameters were supplied to Stripe's API
+                                                        } catch (\Stripe\Error\Authentication $e) {
+                                                        // Authentication with Stripe's API failed
+                                                        // (maybe you changed API keys recently)
+                                                        } catch (\Stripe\Error\ApiConnection $e) {
+                                                        // Network communication with Stripe failed
+                                                        } catch (\Stripe\Error\Base $e) {
+                                                        echo "
+                                                        <p>Message Erreur</p>
+                                                        ";
+                                                        $body = $e->getJsonBody();
+                                                        $err  = $body['error'];
+                                                        print('Status is:' . $e->getHttpStatus() . "\n");
+                                                        print('Type is:' . $err['type'] . "\n");
+                                                        print('Code is:' . $err['code'] . "\n");
+                                                        // Display a very generic error to the user, and maybe send
+                                                        // yourself an email
+                                                        } catch (Exception $e) {
+                                                        echo "
+                                                        <p>Erreur inattendu</p>
+                                                        ";
+                                                        $body = $e->getJsonBody();
+                                                        $err  = $body['error'];
+                                                        print('Status is:' . $e->getHttpStatus() . "\n");
+                                                        print('Type is:' . $err['type'] . "\n");
+                                                        print('Code is:' . $err['code'] . "\n");
+                                                        // Something else happened, completely unrelated to Stripe
+                                                        }
+                                                        if (isset($_POST['montant'])){
+                                                        echo '
+                                                        <h1>Successfully charged €'.$mont.'!</h1>
+                                                        ';
+                                                        }
+                                                        }
+                                                    </txp:php>
+                                                </txp:smd_if>
+                                                <txp:else />
+                                                <!-- if variable boutoustous -->
+                                                <p>vous n’avez pas de paiement en attente</p>
+                                            </txp:if_variable>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </txp:cbe_frontauth_protect>
+        <txp:else />
+        <!-- if cbe -->
+        <section class="sectionPageTitle">
+            <div class="container">
+                <div class="col-sm-8 col-sm-offset-2">
+                    <h1 class="title">Espace Membre</h1>
+                    <h2 class="subtitle">Connectez-vous.</h2>
+                </div>
+            </div>
+            <!-- <a href="http://bit.ly/2swmO0H" target="_blank"><p class="lienfindeurdrink" id="lienfindeurdrinkconnex">Save the date !</br></br>Findeur'drink #8</br>le 29/06</br><span>Réservez ici</span></p></a> -->
+        </section>
+        <section class="grey-bg padding-bottom">
+            <div class="container">
+                <div class="form-content">
+                    <div class="col-md-6 col-md-offset-3 informations">
+                        <div class="content">
+                            <txp:cbe_frontauth_login invite="">
+                                <div class="contact-form">
+                                    <div class="form-group">
+                                        <txp:cbe_frontauth_logname label="Email" class="form-control" />
+                                    </div>
+                                    <div class="form-group">
+                                        <txp:cbe_frontauth_password label="Mot de passe" class="form-control" />
+                                    </div>
+                                    <div class="form-group">
+                                        <txp:cbe_frontauth_stay label="Restez connecté" class="form-control" />
+                                    </div>
+                                    <txp:cbe_frontauth_submit label="Ok" class="btn orange small" />
+                                </div>
+                            </txp:cbe_frontauth_login>
+                            <txp:article_custom id="35">
+                                <p style="margin-top:10px;">
+                                    <txp:permlink>
+                                        <txp:title />
+                                    </txp:permlink>
+                                </p>
+                            </txp:article_custom>
+                            <txp:category name="compte" section="site1">
+                                <p style="margin-top:10px;">Je m'inscris sur Findeur</p>
+                            </txp:category>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </txp:cbe_frontauth_protect>
+</txp:if_category>

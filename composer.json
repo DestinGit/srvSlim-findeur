@@ -1,0 +1,15 @@
+{
+    "name": "findeur/api-slim-project",
+    "type": "project",
+    "require": {
+        "slim/slim": "^3.9",
+        "palanik/corsslim": "dev-slim3"
+    },
+    "autoload": {
+        "psr-4": {
+            "app\\Controller\\": "src/Controllers/",
+            "app\\DAO\\": "src/Models/DAOs",
+            "app\\Entities\\": "src/Models/Entities"
+        }
+    }
+}
