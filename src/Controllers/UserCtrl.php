@@ -109,24 +109,15 @@ class UserCtrl
      */
     public function findUserPost(Request $request, Response $response, array $args) {
         $data = $request->getParsedBody();
-        //$name = filter_var('user', FILTER_SANITIZE_STRING);
-        //$pass = filter_var('mdp', FILTER_SANITIZE_STRING);
 
         // create curl resource
         $curl = curl_init();
-/*        $name = $request->getParam("user");
-        $pass = $request->getParam('mdp');
-        $pass = $args['mdp'] ?? null;*/
 
         $paramsTab = [
-            'user' => $request->getParam("user") ?? null,
-            'mdp' => $request->getParam('mdp') ?? null
+            'user' => $request->getParam("username") ?? null,
+            'mdp' => $request->getParam('password') ?? null
         ];
-        $params = [
-            'user' => 'gando',
-            'mdp' => 'sd5fp68nhg32'
-        ];
-//        $params_string = http_build_query($params);
+
         $params_string = http_build_query($paramsTab);
 
         // set options and url
@@ -147,10 +138,6 @@ class UserCtrl
 
         $arr = $this->returnArrayFromPartOfString($output, "\n<!--");
 
-/*        $response->withHeader('Access-Control-Allow-Origin', '')
-            ->withHeader('Access-Control-Allow-Headers', 'X-Requested-With, Content-Type, Accept, Origin, Authorization')
-            ->withHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-*/
         return $response->withJson($arr);
     }
 
