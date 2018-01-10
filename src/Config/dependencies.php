@@ -1,4 +1,5 @@
 <?php
+
 use \Psr\Container\ContainerInterface;
 
 // Injection de dépendences
@@ -16,14 +17,14 @@ $container['pdo'] = function (ContainerInterface $container) {
     $dsn = $container->get('database')['dsn'];
 
     $pdo = null;
-    try{
+    try {
         $pdo = new \PDO(
             $dsn,
             $container->get('database')['user'],
             $container->get('database')['password'],
-            [\PDO::ATTR_ERRMODE=>\PDO::ERRMODE_EXCEPTION]
+            [\PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION]
         );
-    }catch (PDOException $ex) {
+    } catch (PDOException $ex) {
         echo $ex->getMessage();
     }
     return $pdo;
@@ -42,3 +43,13 @@ $container['user.dao'] = function (ContainerInterface $container) {
 };
 
 
+/**
+ * @param ContainerInterface $container
+ * @return \app\DAO\TextPatternDAO
+ * @throws \Psr\Container\ContainerExceptionInterface
+ * @throws \Psr\Container\NotFoundExceptionInterface
+ */
+$container['textpattern.dao'] = function (ContainerInterface $container) {
+    $pdo = $container->get('pdo');
+    return new  \app\DAO\TextPatternDAO($pdo);
+};

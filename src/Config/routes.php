@@ -15,3 +15,6 @@ $app->group("/user", function () use ($app) {
     $app->post('/find', app\Controller\UserCtrl::class . ":findUserPost");
 
 });
+
+// Routes les missions proposées par des freelances
+$app->get('/freelance-list', app\Controller\TextPatternCtrl::class . ':getPersonalBusiness');

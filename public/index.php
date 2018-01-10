@@ -8,12 +8,24 @@
 
 // Auto chargement des class
 require __DIR__ . '/../vendor/autoload.php';
+/*$config = [
+    'settings' => [
+        'displayErrorDetails' => true,
+
+        'logger' => [
+            'name' => 'slim-app',
+            'level' => Monolog\Logger::DEBUG,
+            'path' => __DIR__ . '/../logs/app.log',
+        ],
+    ],
+];*/
 
 use Slim\App;
 
 // Instantiation du Framework
 $app = new App();
 
+//$app = new App($config);
 
 $corsOptions = array(
     "origin" => "*",

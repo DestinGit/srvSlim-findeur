@@ -9,6 +9,7 @@
 namespace app\DAO;
 
 use app\Entities\UserDTO;
+use Exception;
 
 class UserDAO implements IUserDAO
 {
@@ -52,6 +53,7 @@ class UserDAO implements IUserDAO
 
     /**
      * @return array
+     * @throws Exception
      */
     public function getAllAsEntity(){
         $this->selectStatement->setFetchMode(\PDO::FETCH_CLASS, UserDTO::class);
@@ -67,6 +69,7 @@ class UserDAO implements IUserDAO
 
     /**
      * @return array
+     * @throws Exception
      */
     public function getOneAsArray(){
         $data = $this->selectStatement->fetch(\PDO::FETCH_ASSOC);
@@ -81,6 +84,7 @@ class UserDAO implements IUserDAO
 
     /**
      * @return UserDTO
+     * @throws Exception
      */
     public function getOneAsEntity(){
         $this->selectStatement->setFetchMode(\PDO::FETCH_CLASS, UserDTO::class);
