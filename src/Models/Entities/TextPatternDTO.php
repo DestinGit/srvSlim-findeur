@@ -71,6 +71,7 @@ class TextPatternDTO
     private $custom31;
     private $custom32;
     private $custom33;
+    private $custom34;
 
     private static $columnMap = [
         'user_id' => 'ID',
@@ -132,7 +133,8 @@ class TextPatternDTO
         'custom_30' => 'custom30',
         'custom_31' => 'custom31',
         'custom_32' => 'custom32',
-        'custom_33' => 'custom33'
+        'custom_33' => 'custom33',
+        'custom_34' => 'custom34'
     ];
 
     /**
@@ -768,6 +770,16 @@ class TextPatternDTO
         return $this;
     }
 
+    /**
+     * @param mixed $custom34
+     * @return TextPatternDTO
+     */
+    public function setCustom34($custom34)
+    {
+        $this->custom34 = $custom34;
+        return $this;
+    }
+
     //************************************************************* GETTERS
 
     /**
@@ -1248,6 +1260,14 @@ class TextPatternDTO
     public function getCustom33()
     {
         return $this->custom33;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getCustom34()
+    {
+        return $this->custom34;
     }
 
 }

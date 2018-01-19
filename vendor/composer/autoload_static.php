@@ -14,6 +14,7 @@ class ComposerStaticInit8704a1aeb19e4168fd5f18eb57e8204d
         'a' => 
         array (
             'app\\Entities\\' => 13,
+            'app\\DBMA\\' => 9,
             'app\\DAO\\' => 8,
             'app\\Controller\\' => 15,
         ),
@@ -44,6 +45,10 @@ class ComposerStaticInit8704a1aeb19e4168fd5f18eb57e8204d
         'app\\Entities\\' => 
         array (
             0 => __DIR__ . '/../..' . '/src/Models/Entities',
+        ),
+        'app\\DBMA\\' => 
+        array (
+            0 => __DIR__ . '/../..' . '/src/Models/DBMA',
         ),
         'app\\DAO\\' => 
         array (

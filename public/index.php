@@ -23,7 +23,9 @@ require __DIR__ . '/../vendor/autoload.php';
 use Slim\App;
 
 // Instantiation du Framework
-$app = new App();
+$app = new App([
+    'settings' => ['displayErrorDetails' => false]
+]);
 
 //$app = new App($config);
 
@@ -39,8 +41,8 @@ $app->add($cors);
 
 
 // Chargement de la dépendence sur la configuration et la connexion à la BD
-//require '../src/Config/dependencies.php';
-require __DIR__ . '/../src/config/dependencies.php';
+require '../src/Config/dependencies.php';
+// require __DIR__ . '/../src/config/dependencies.php';
 
 // Chargement des routes de l'application
 require '../src/Config/routes.php';

@@ -16,5 +16,13 @@ $app->group("/user", function () use ($app) {
 
 });
 
-// Routes les missions proposées par des freelances
+// Routes pour les services proposés par des freelances
 $app->get('/freelance-list', app\Controller\TextPatternCtrl::class . ':getPersonalBusiness');
+
+// Routes pour les missions proposées par les entreprises
+$app->get('/missions-list', app\Controller\TextPatternCtrl::class . ':getListOfMissionsToApply');
+
+// Route pour poster une annonce ou postuler à une mission
+$app->group('/ar', function () use ($app) {
+    $app->post('/add',app\Controller\TextPatternCtrl::class . ':applyToAMission');
+});

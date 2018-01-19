@@ -7,6 +7,7 @@ $baseDir = dirname($vendorDir);
 
 return array(
     'app\\Entities\\' => array($baseDir . '/src/Models/Entities'),
+    'app\\DBMA\\' => array($baseDir . '/src/Models/DBMA'),
     'app\\DAO\\' => array($baseDir . '/src/Models/DAOs'),
     'app\\Controller\\' => array($baseDir . '/src/Controllers'),
     'Slim\\' => array($vendorDir . '/slim/slim/Slim'),
