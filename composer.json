@@ -10,7 +10,9 @@
             "app\\Controller\\": "src/Controllers/",
             "app\\DAO\\": "src/Models/DAOs",
             "app\\DBMA\\": "src/Models/DBMA",
-            "app\\Entities\\": "src/Models/Entities"
+            "app\\Entities\\": "src/Models/Entities",
+            "app\\Libs\\": "src/Libs/",
+            "app\\Utils\\": "src/Utils/"
         }
     }
 }

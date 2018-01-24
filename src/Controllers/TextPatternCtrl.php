@@ -119,12 +119,16 @@ class TextPatternCtrl
 
     /**
      * @return TextPatternDTO
-     * @throws ContainerExceptionInterface
-     * @throws NotFoundExceptionInterface
      */
     private function getTextPatternDTO()
     {
-        return $this->ctx->get('textpattern.dto');
+        $dao = null;
+        try {
+            $dto = $this->ctx->get('textpattern.dto');
+        } catch (ContainerExceptionInterface $exception) {
+        }
+
+        return $dto;
     }
 
     /**

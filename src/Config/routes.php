@@ -13,7 +13,8 @@ $app->group("/user", function () use ($app) {
     $app->get('/details/{login}/{pass}', app\Controller\UserCtrl::class . ":getOneUser");
     $app->get('/find/{name}/{pass}', app\Controller\UserCtrl::class . ":findUser");
     $app->post('/find', app\Controller\UserCtrl::class . ":findUserPost");
-
+    $app->post('/add', app\Controller\UserCtrl::class . ":addUserPost");
+//    $app->get('/add', app\Controller\UserCtrl::class . ":addUserPost");
 });
 
 // Routes pour les services proposés par des freelances

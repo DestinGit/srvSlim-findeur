@@ -9,6 +9,9 @@
 namespace app\Controller;
 
 use app\DAO\UserDAO;
+use app\Entities\UserDTO;
+use app\Libs\PasswordHash;
+use app\Utils\Utils;
 use Psr\{
     Container\ContainerExceptionInterface, Container\ContainerInterface, Container\NotFoundExceptionInterface
 };
@@ -34,14 +37,15 @@ class UserCtrl
      * @param Response $response
      * @return Response
      */
-    public function getAllUsers(Request $request, Response $response) {
+    public function getAllUsers(Request $request, Response $response)
+    {
         $result = [];
-            try {
-                $users = $this->getUserDAO();
-                $result = $users->findAll()->getAllAsArray();
-            } catch (NotFoundExceptionInterface $e) {
-            } catch (ContainerExceptionInterface $e) {
-            }
+        try {
+            $users = $this->getUserDAO();
+            $result = $users->findAll()->getAllAsArray();
+        } catch (NotFoundExceptionInterface $e) {
+        } catch (ContainerExceptionInterface $e) {
+        }
         return $response->withJson($result);
     }
 
@@ -51,7 +55,8 @@ class UserCtrl
      * @param array $args
      * @return Response
      */
-    public function getOneUser(Request $request, Response $response, array $args) {
+    public function getOneUser(Request $request, Response $response, array $args)
+    {
         $result = [];
         $searchUser = [
             'name' => $args['login'] ?? null,
@@ -59,12 +64,12 @@ class UserCtrl
         ];
         //var_dump($searchUser);
         try {
-                $users = $this->getUserDAO();
-                $result = $users->find($searchUser, [], [1]);
+            $users = $this->getUserDAO();
+            $result = $users->find($searchUser, [], [1]);
 
-            } catch (NotFoundExceptionInterface $e) {
-            } catch (ContainerExceptionInterface $e) {
-            }
+        } catch (NotFoundExceptionInterface $e) {
+        } catch (ContainerExceptionInterface $e) {
+        }
         return $response->withJson($result);
 
     }
@@ -75,7 +80,8 @@ class UserCtrl
      * @param array $args
      * @return Response
      */
-    public function findUser(Request $request, Response $response, array $args) {
+    public function findUser(Request $request, Response $response, array $args)
+    {
 
         $name = $args['name'] ?? null;
         $pass = $args['pass'] ?? null;
@@ -107,7 +113,8 @@ class UserCtrl
      * @param Response $response
      * @return Response
      */
-    public function findUserPost(Request $request, Response $response, array $args) {
+    public function findUserPost(Request $request, Response $response, array $args)
+    {
         $data = $request->getParsedBody();
 
         // create curl resource
@@ -142,13 +149,56 @@ class UserCtrl
     }
 
 
+    public function addUserPost(Request $request, Response $response)
+    {
+        // Retrieving query parameters and encrypting the password and generating the associated salt
+        $requestParams = $request->getParams();
+        $requestParams = $this->cryptPassAndNonceFromRequestParams($requestParams);
+
+        // Give a default privilege for the user
+        $requestParams['privs'] = 5;
+
+        // Hydrate the object that represents the user
+        $userObj = $this->getUserDTO();
+        $userObj->hydrate($requestParams);
+
+        // Verification of required fields
+        $msg = $this->verificationOfRequiredFields($userObj);
+
+        // If there is no error message, persiste data on DB
+        if (empty($msg)) {
+            $this->getUserDAO()->save($userObj)->flush();
+        }
+
+        return $response->withJson($msg);
+    }
+
     /**
      * @return UserDAO
-     * @throws \Psr\Container\ContainerExceptionInterface
-     * @throws \Psr\Container\NotFoundExceptionInterface
      */
-    private function getUserDAO() {
-        return $this->ctx->get('user.dao');
+    private function getUserDAO()
+    {
+        $dao = null;
+        try {
+            $dao = $this->ctx->get('user.dao');
+        } catch (ContainerExceptionInterface $exception) {
+        }
+
+        return $dao;
+    }
+
+    /**
+     * @return UserDTO
+     */
+    private function getUserDTO()
+    {
+        $dto = null;
+        try {
+            $dto = $this->ctx->get('user.dto');
+        } catch (ContainerExceptionInterface $exception) {
+        }
+
+        return $dto;
     }
 
     /**
@@ -156,11 +206,19 @@ class UserCtrl
      * @param $findMe
      * @return mixed
      */
-    private function returnArrayFromPartOfString($myString, $findMe) {
+    private function returnArrayFromPartOfString($myString, $findMe)
+    {
         $pos = strpos($myString, $findMe);
         $res = substr($myString, 0, $pos);
         $arr = json_decode($res, true);
         return $arr;
+    }
+
+    private function returnArrayFromPartOfString2($myString, $findMe)
+    {
+        $pos = strpos($myString, $findMe);
+        $res = substr($myString, 0, $pos);
+        return $res;
     }
 
     /**
@@ -169,7 +227,8 @@ class UserCtrl
      * @param int $depth
      * @return string
      */
-    private function safe_json_encode($value, $options = 0, $depth = 512) {
+    private function safe_json_encode($value, $options = 0, $depth = 512)
+    {
         $encoded = json_encode($value, $options, $depth);
         if ($encoded === false && $value && json_last_error() == JSON_ERROR_UTF8) {
             $encoded = json_encode($this->utf8ize($value), $options, $depth);
@@ -181,7 +240,8 @@ class UserCtrl
      * @param $mixed
      * @return array|null|string|string[]
      */
-    private function utf8ize($mixed) {
+    private function utf8ize($mixed)
+    {
         if (is_array($mixed)) {
             foreach ($mixed as $key => $value) {
                 $mixed[$key] = $this->utf8ize($value);
@@ -196,14 +256,74 @@ class UserCtrl
      * @param $d
      * @return array|string
      */
-    private function utf8ize2($d) {
+    private function utf8ize2($d)
+    {
         if (is_array($d)) {
             foreach ($d as $k => $v) {
                 $d[$k] = $this->utf8ize2($v);
             }
-        } else if (is_string ($d)) {
+        } else if (is_string($d)) {
             return utf8_encode($d);
         }
         return $d;
+    }
+
+    /**
+     * @param $requestParams
+     * @return array
+     */
+    private function cryptPassAndNonceFromRequestParams($requestParams)
+    {
+        $requestParams['pass'] = isset($requestParams['pass']) && !empty($requestParams['pass']) ?
+            $requestParams['pass'] : Utils::generate_password();
+
+        // Force the use of weaker portable hashes. And generate the hash of password
+        $t_hasher = new PasswordHash(8, TRUE);
+        $requestParams['pass'] = $t_hasher->HashPassword($requestParams['pass']);
+
+        // Get the salt
+        $requestParams['nonce'] = md5(uniqid(rand(), true));
+        return $requestParams;
+    }
+
+    /*
+            // Must be a minimum of 8 characters
+             // Must contain at least 1 number
+             // Must contain at least one uppercase character
+             // Must contain at least one lowercase character
+             $patternPassword = '/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d]{8,}$/';
+             preg_match($patternPassword, 'motDePasse1');
+    */
+//        preg_match($pattern, $subject, $matches, PREG_OFFSET_CAPTURE, 3);
+    /**
+     * @param UserDTO $userObj
+     * @return array
+     */
+    private function verificationOfRequiredFields($userObj)
+    {
+        $msg = [];
+        $patternFrancePhone = '/^((\+|00)33\s?|0)[67](\s?\d{2}){4}$/';
+        $retPhoneRegEx = preg_match($patternFrancePhone, $userObj->getPhone());
+
+        $patternEmail = '/^[^\W][a-zA-Z0-9_]+(\.[a-zA-Z0-9_]+)*\@[a-zA-Z0-9_]+(\.[a-zA-Z0-9_]+)*\.[a-zA-Z]{2,4}$/';
+        $retEmailRegEx = preg_match($patternEmail, $userObj->getEmail());
+
+        if ($userObj->getDetail() == null) {
+            $msg['detail'] = false;
+        }
+        if ($userObj->getFirstName() == null) {
+            $msg['first_name'] = false;
+        }
+        if ($userObj->getLastName() == null) {
+            $msg['last_name'] = false;
+        }
+        if ($userObj->getEmail() == null || $retEmailRegEx === false) {
+            $msg['email'] = false;
+        }
+        if ($userObj->getPhone() == null || $retPhoneRegEx === false) {
+            $msg['phone'] = false;
+        }
+
+        return $msg;
     }
 }
