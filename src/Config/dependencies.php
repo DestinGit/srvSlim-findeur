@@ -4,19 +4,20 @@ use \Psr\Container\ContainerInterface;
 
 // Injection de dépendences
 $container = $app->getContainer();
-$container['appConfig'] = ['appName' => 'Slim API', 'maintenance' => true];
+$container['appConfig'] = ['appName' => getenv('APP_NAME'), 'maintenance' => getenv('APP_STATUS')];
+/*
 $container['database'] = [
     'user' => 'root',
     'password' => '',
     'dsn' => 'mysql:host=127.0.0.1;dbname=findeurDBTest;charset=utf8'
 ];
-/*
-$container['database'] = [
-    'user' => '143657',
-    'password' => 'MopaoDB@01',
-    'dsn' => 'mysql:host=mysql-yemeialways.alwaysdata.net;dbname=yemeialways_findeurdb;charset=utf8'
-];
 */
+$container['database'] = [
+    'user' => getenv('DB_USER'),
+    'password' => getenv('DB_PASS'),
+    'dsn' => getenv('DATABASE_DSN')
+];
+
 // Récupération de la configuration
 $container['pdo'] = function (ContainerInterface $container) {
     $dsn = $container->get('database')['dsn'];
@@ -31,7 +32,7 @@ $container['pdo'] = function (ContainerInterface $container) {
         );
 
         // Start a transaction, disable auto-commit
-        $pdo->beginTransaction();
+        //$pdo->beginTransaction();
 
     } catch (PDOException $ex) {
         echo $ex->getMessage();
@@ -77,3 +78,5 @@ $container['textpattern.dao'] = function (ContainerInterface $container) {
 $container['textpattern.dto'] = function () {
     return new \app\Entities\TextPatternDTO();
 };
+
+require 'Services/corsServices.php';

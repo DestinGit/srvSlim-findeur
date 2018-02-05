@@ -112,6 +112,32 @@ class UserDAO implements IUserDAO
         // TODO: Implement findOneById() method.
     }
 
+    public function findOneByName(string $name)
+    {
+        $sql = 'SELECT * FROM txp_users WHERE name = ? ';
+
+        try{
+            $this->selectStatement = $this->pdo->prepare($sql);
+            $this->selectStatement->execute([$name]);
+        } catch (\PDOException $exception) {
+        }
+
+        return $this;
+    }
+
+    public function findOneByNameOrEmail(string $name, string $email)
+    {
+        $sql = 'SELECT * FROM txp_users WHERE name = ? OR email = ? ';
+
+        try{
+            $this->selectStatement = $this->pdo->prepare($sql);
+            $this->selectStatement->execute([$name, $email]);
+        } catch (\PDOException $exception) {
+        }
+
+        return $this;
+    }
+
     /**
      * @param array $search
      * @param array $orderBy
@@ -189,14 +215,14 @@ class UserDAO implements IUserDAO
     /**
      * Validate the transaction or rollback
      */
-    public function flush()
+    /*public function flush()
     {
         try {
             $this->pdo->commit();
         } catch (\PDOException $exception) {
             $this->pdo->rollBack();
         }
-    }
+    }*/
 
     //UPDATE txp_users SET pass = '$P$BMVzitxb/DHAp1rhvtsdsCthfpYJg./', nonce = '0d381b89f0375f9bb18ce21a246925a7', RealName = 'titi toto' WHERE user_id = 4202
 
@@ -229,7 +255,8 @@ class UserDAO implements IUserDAO
             $lastInsertId = $this->pdo->lastInsertId();
 
         } catch (\PDOException $exception) {
-            $this->pdo->rollBack();
+//            $this->pdo->rollBack();
+            echo 'Error : ' . $exception->getMessage();
         }
 
         return $lastInsertId;
@@ -263,7 +290,7 @@ class UserDAO implements IUserDAO
             ]);
 
         } catch (\PDOException $exception) {
-            $this->pdo->rollBack();
+//            $this->pdo->rollBack();
         }
 
     }

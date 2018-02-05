@@ -74,7 +74,7 @@ class TextPatternDTO
     private $custom34;
 
     private static $columnMap = [
-        'user_id' => 'ID',
+        'ID' => 'ID',
         'Posted' => 'posted',
         'Expires' => 'expires',
         'AuthorID' => 'authorID',

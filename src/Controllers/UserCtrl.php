@@ -21,7 +21,7 @@ use Slim\Http\Response;
 
 class UserCtrl
 {
-    private $ctx;
+    private $ctx, $password;
 
     /**
      * UserCtrl constructor.
@@ -149,6 +149,48 @@ class UserCtrl
     }
 
 
+    public function findUserPost2(Request $request, Response $response) {
+        // Retrieving query parameters and encrypting the password and generating the associated salt
+        $requestParams = $request->getParams();
+
+        $login = $requestParams['username'] ?? '';
+        $search = [
+            //'pass' => $requestParams['password'] ?? ''
+        ];
+
+        $userPass = $requestParams['password'] ?? '';
+
+        $patternEmail = '/^[^\W][a-zA-Z0-9_]+(\.[a-zA-Z0-9_]+)*\@[a-zA-Z0-9_]+(\.[a-zA-Z0-9_]+)*\.[a-zA-Z]{2,4}$/';
+        $retEmailRegEx = preg_match($patternEmail, $login);
+        if ($retEmailRegEx == false) {
+            $search['name'] = $login;
+        } else {
+            $search['email'] = $login;
+        }
+
+//        $user = $this->getUserDAO()->find($search, [], [1])->getAllAsArray();
+        $user = $this->getUserDAO()->findOneByNameOrEmail($search['name'] ?? '', $search['email'] ?? '')
+            ->getOneAsArray();
+
+        $result = ['success' => false,
+            'message' => 'Bad credentials'];
+        if ($user != false) {
+            $t_hasher = new PasswordHash(8, TRUE);
+            $result['success'] = $t_hasher->CheckPassword($userPass, $user['pass']);
+        }
+
+
+        if ($result['success']) {
+            $result['token'] = $user['nonce'];
+            unset($user['nonce']);
+            $result['user'] = $user;
+            $result['message'] = 'Successful connection';
+        }
+
+        return $response->withJson($result);
+
+    }
+
     public function addUserPost(Request $request, Response $response)
     {
         // Retrieving query parameters and encrypting the password and generating the associated salt
@@ -157,6 +199,12 @@ class UserCtrl
 
         // Give a default privilege for the user
         $requestParams['privs'] = 5;
+        $requestParams['lastAccess'] = 0;
+        if (!isset($requestParams['realName']) || empty($requestParams['realName'])) {
+            $requestParams['realName'] .= $requestParams['first_name'] ?? '';
+            $requestParams['realName'] .= ' ';
+            $requestParams['realName'] .= $requestParams['last_name'] ?? '';
+        }
 
         // Hydrate the object that represents the user
         $userObj = $this->getUserDTO();
@@ -165,9 +213,13 @@ class UserCtrl
         // Verification of required fields
         $msg = $this->verificationOfRequiredFields($userObj);
 
-        // If there is no error message, persiste data on DB
+        // If there is no error message, persist data on DB
         if (empty($msg)) {
-            $this->getUserDAO()->save($userObj)->flush();
+             $dao = $this->getUserDAO();
+             $dao->save($userObj);
+//                 $dao->save($userObj)->flush();
+             $this->sendAnEmailViaTextpattern($userObj->getEmail() ?? '', $userObj->getName() ?? '',
+                 $this->password, $userObj->getLastName() ?? '');
         }
 
         return $response->withJson($msg);
@@ -269,6 +321,19 @@ class UserCtrl
     }
 
     /**
+     * @param string $name
+     * @param string $email
+     * @return array|boolean
+     */
+    private function checkIfUserAlreadyExist(string $name, string $email) {
+        $dao = $this->getUserDAO();
+        $user = $dao->findOneByNameOrEmail($name, $email)
+            ->getOneAsArray();
+
+        return $user;
+    }
+
+    /**
      * @param $requestParams
      * @return array
      */
@@ -276,6 +341,8 @@ class UserCtrl
     {
         $requestParams['pass'] = isset($requestParams['pass']) && !empty($requestParams['pass']) ?
             $requestParams['pass'] : Utils::generate_password();
+
+$this->password = $requestParams['pass'];
 
         // Force the use of weaker portable hashes. And generate the hash of password
         $t_hasher = new PasswordHash(8, TRUE);
@@ -302,11 +369,16 @@ class UserCtrl
     private function verificationOfRequiredFields($userObj)
     {
         $msg = [];
+
         $patternFrancePhone = '/^((\+|00)33\s?|0)[67](\s?\d{2}){4}$/';
         $retPhoneRegEx = preg_match($patternFrancePhone, $userObj->getPhone());
 
         $patternEmail = '/^[^\W][a-zA-Z0-9_]+(\.[a-zA-Z0-9_]+)*\@[a-zA-Z0-9_]+(\.[a-zA-Z0-9_]+)*\.[a-zA-Z]{2,4}$/';
         $retEmailRegEx = preg_match($patternEmail, $userObj->getEmail());
+
+        if (strlen($userObj->getName()) < 5) {
+            $msg['name'] = false;
+        }
 
         if ($userObj->getDetail() == null) {
             $msg['detail'] = false;
@@ -317,13 +389,43 @@ class UserCtrl
         if ($userObj->getLastName() == null) {
             $msg['last_name'] = false;
         }
-        if ($userObj->getEmail() == null || $retEmailRegEx === false) {
+        if ($retEmailRegEx == false) {
             $msg['email'] = false;
         }
-        if ($userObj->getPhone() == null || $retPhoneRegEx === false) {
+        if ($retPhoneRegEx == false) {
             $msg['phone'] = false;
         }
 
+        if ($this->checkIfUserAlreadyExist($userObj->getName() ?? '', $userObj->getEmail()) != false) {
+            $msg['name'] = false;
+            $msg['message'][] = "User already exist";
+        }
+
+        // If there is at least one field that has been incorrectly completed
+        if (!empty($msg)) {
+            $msg['error'] = true;
+            $msg['message'][] = 'Please complete all required fields correctly.';
+        }
+
         return $msg;
+    }
+
+    private function sendAnEmailViaTextpattern(string $mail, string $login, string $pass, string $realname) {
+        // create curl resource
+        $curl = curl_init();
+
+        // set options and url
+        $opts = [
+            CURLOPT_URL => "http://findeur2017.findeur.fr/senddata?user=$login&mdp=$pass&email=$mail&name=$realname",
+            CURLOPT_RETURNTRANSFER => true,
+        ];
+        curl_setopt_array($curl, $opts);
+
+        // $output contains the output string
+        $output = curl_exec($curl);
+
+        // close curl resource to free up system resources
+        curl_close($curl);
+
     }
 }

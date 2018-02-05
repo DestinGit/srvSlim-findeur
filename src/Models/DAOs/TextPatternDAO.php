@@ -140,7 +140,7 @@ class TextPatternDAO implements ITextPatternDAO
                 Section,override_form,Keywords,url_title,custom_1,custom_2,custom_3,custom_4,custom_5,custom_6,custom_7,
                 custom_8,custom_9,custom_10,uid,feed_time,custom_11,custom_12,custom_13,custom_14,custom_15,custom_16,
                 custom_17,custom_18,custom_19,custom_20,custom_21,custom_22,custom_23,custom_24,custom_25,custom_26,
-                custom_27,custom_28,custom_29,custom_30,custom_31,custom_32,custom_33
+                custom_27,custom_28,custom_29,custom_30,custom_31,custom_32,custom_33,custom_34
                 )
                  VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,
                  ?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) ";
@@ -169,13 +169,13 @@ class TextPatternDAO implements ITextPatternDAO
                 $tpArticle->getCustom20(), $tpArticle->getCustom21(), $tpArticle->getCustom22(), $tpArticle->getCustom23(),
                 $tpArticle->getCustom24(), $tpArticle->getCustom25(), $tpArticle->getCustom26(), $tpArticle->getCustom27(),
                 $tpArticle->getCustom28(), $tpArticle->getCustom29(), $tpArticle->getCustom30(), $tpArticle->getCustom31(),
-                $tpArticle->getCustom32(), $tpArticle->getCustom33()
+                $tpArticle->getCustom32(), $tpArticle->getCustom33(), $tpArticle->getCustom34()
             ]);
 
             $lastInsertId = $this->pdo->lastInsertId();
 
         } catch (\PDOException $exception) {
-            $this->pdo->rollBack();
+//            $this->pdo->rollBack();
         }
 
         return $lastInsertId;
@@ -205,7 +205,7 @@ class TextPatternDAO implements ITextPatternDAO
             ]);
 
         } catch (\PDOException $exception) {
-            $this->pdo->rollBack();
+//            $this->pdo->rollBack();
         }
     }
 
@@ -213,11 +213,11 @@ class TextPatternDAO implements ITextPatternDAO
      * Validate the transaction or rollback
      */
     public function flush() {
-        try {
-            $this->pdo->commit();
-        } catch (\PDOException $exception) {
-            $this->pdo->rollBack();
-        }
+//        try {
+//            $this->pdo->commit();
+//        } catch (\PDOException $exception) {
+//            $this->pdo->rollBack();
+//        }
     }
 
 

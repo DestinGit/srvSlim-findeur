@@ -5,9 +5,14 @@
  * Date: 15/12/2017
  * Time: 16:17
  */
+date_default_timezone_set("UTC");
 
 // Auto chargement des class
 require __DIR__ . '/../vendor/autoload.php';
+
+$dotenv = new Dotenv\Dotenv(dirname(__DIR__). '/src/Config/Env');
+$dotenv->load();
+
 /*$config = [
     'settings' => [
         'displayErrorDetails' => true,
@@ -24,28 +29,20 @@ use Slim\App;
 
 // Instantiation du Framework
 $app = new App([
-    'settings' => ['displayErrorDetails' => false]
+    'settings' => ['displayErrorDetails' => true]
 ]);
 
 //$app = new App($config);
 
-$corsOptions = array(
-    "origin" => "*",
-    "exposeHeaders" => array("Content-Type", "X-Requested-With", "X-authentication", "X-client"),
-    "allowMethods" => array('GET', 'POST', 'PUT', 'DELETE', 'OPTIONS')
-);
-
-$cors = new \CorsSlim\CorsSlim($corsOptions);
-
-$app->add($cors);
-
 
 // Chargement de la dépendence sur la configuration et la connexion à la BD
 require '../src/Config/dependencies.php';
-// require __DIR__ . '/../src/config/dependencies.php';
+
+// Chargement des middlewares
+require '../src/Config/Middlewares/middlewares.php';
 
 // Chargement des routes de l'application
-require '../src/Config/routes.php';
+require '../src/Config/Routes/routes.php';
 
 
 // Lancement du Framework

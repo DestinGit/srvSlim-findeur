@@ -9,7 +9,9 @@
 namespace app\Controller;
 
 use app\DAO\TextPatternDAO;
+use app\DAO\UserDAO;
 use app\Entities\TextPatternDTO;
+use DateTime;
 use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\ContainerInterface;
 use Psr\Container\NotFoundExceptionInterface;
@@ -42,11 +44,14 @@ class TextPatternCtrl
     public function getPersonalBusiness(Request $request, Response $response)
     {
         // filter input 'results' parameter
-        $options = ['options' => ['default' => 5, 'min_range' => 0]];
+        $options = ['options' => ['default' => 15, 'min_range' => 0]];
         $nbOfResults = filter_input(INPUT_GET, 'results', FILTER_VALIDATE_INT, $options);
 
         $search = ['Section' => 'particulier-entreprise'];
-        $limits = [$nbOfResults, $nbOfResults * 2];
+//        $limits = [$nbOfResults, $nbOfResults * 2];
+
+
+        $limits = [$nbOfResults, rand(0, 3680)];
 
         $personalBusiness = $this->getTextPatternDAO()
             ->find($search, [], $limits)->getAllAsArray();
@@ -100,22 +105,161 @@ class TextPatternCtrl
         $retStatus = $this->checkCandidateBeforeApplyToMission($missionFromDB, $txpArticle, $txpDTO);
 
         if ($retStatus['status']) {
+//            $this->getTextPatternDAO()
+//                ->save($txpDTO)->flush();
             $this->getTextPatternDAO()
-                ->save($txpDTO)->flush();
+                ->save($txpDTO);
         }
 
         return $response->withJson($retStatus);
     }
 
+
+    public function addNewMission(Request $request, Response $response)
+    {
+        $txpArticle = $request->getParams();
+
+        $txpArticle = $this->initializationOfDefaultValues($txpArticle);
+
+        $txpDTO = $this->getTextPatternDTO();
+        $txpDTO->hydrate($txpArticle);
+
+        // Verification of required fields
+        $msg = $this->verificationOfRequiredFields($txpDTO, $txpArticle['AuthorID'] ?? '');
+
+        // If there is no error message, persist data on DB
+        if (empty($msg)) {
+            $dao = $this->getTextPatternDAO();
+            $dao->save($txpDTO);
+        }
+
+        return $response->withJson($msg);
+    }
+
+    /**
+     * @param array $txpArticle
+     * @return array $txpArticle
+     */
+    private function initializationOfDefaultValues(array $txpArticle)
+    {
+        if (!isset($txpArticle['Posted']) || empty($txpArticle['Posted'])) {
+            $date = new \DateTime();
+            $txpArticle['Posted'] = $date->format('Y-m-d H:i:s');
+        }
+
+        $txpArticle['Section'] = 'auto-entrepreneur';
+        $txpArticle['Status'] = 3;
+        $txpArticle['Annotate'] = 0;
+        $txpArticle['url_title'] = urlencode($txpArticle['Title']);
+        $txpArticle['custom_1'] = 'actif';
+        $txpArticle['Expires'] = 0;
+        $txpArticle['LastMod'] = 0;
+        $txpArticle['comments_count'] = 0;
+        $txpArticle['textile_body'] = 1;
+        $txpArticle['textile_excerpt'] = 1;
+        $txpArticle['feed_time'] = 0;
+
+        if (!isset($txpArticle['LastModID']) || empty($txpArticle['LastModID']))
+            $txpArticle['LastModID'] = $txpArticle['AuthorID'] ?? '';
+
+        if (isset($txpArticle['Title_html']) || empty($txpArticle['Title_html']))
+            $txpArticle['Title_html'] = $txpArticle['Title'] ?? '';
+
+        if (!isset($txpArticle['Excerpt_html']) || empty($txpArticle['Excerpt_html']))
+            $txpArticle['Body_html'] = $txpArticle['Body'] ?? '';
+
+        if (!isset($txpArticle['Excerpt_html']) || empty($txpArticle['Excerpt_html']))
+            $txpArticle['Excerpt'] = $txpArticle['Body'] ?? '';
+
+        if (!isset($txpArticle['Excerpt_html']) || empty($txpArticle['Excerpt_html']))
+            $txpArticle['Excerpt_html'] = $txpArticle['Body'] ?? '';
+
+        if (!isset($txpArticle['Image']) || empty($txpArticle['Image']))
+            $txpArticle['Image'] = 'no';
+
+        if (!isset($txpArticle['Category2']) || empty($txpArticle['Category2']))
+            $txpArticle['Category2'] = $txpArticle['Category1'] ?? '';
+
+        if (!isset($txpArticle['AnnotateInvite']) || empty($txpArticle['AnnotateInvite']))
+            $txpArticle['AnnotateInvite'] = $txpArticle['Annotate'];
+
+        if (!isset($txpArticle['override_form']) || empty($txpArticle['override_form']))
+            $txpArticle['override_form'] = '-';
+
+        if (!isset($txpArticle['uid']) || empty($txpArticle['uid'])) {
+            $txpArticle['uid'] = '-';
+        }
+
+        for ($i = 1; $i <= 34; ++$i) {
+            if (!isset($txpArticle['custom_' . $i]) || empty($txpArticle['custom_' . $i])) {
+                $txpArticle['custom_' . $i] = '-';
+            }
+        }
+
+        return $txpArticle;
+    }
+
+    /**
+     * @param TextPatternDTO $txpArticle
+     * @param string $name
+     * @return array
+     */
+    private function verificationOfRequiredFields($txpArticle, $name)
+    {
+        $msg = [];
+
+        if ($txpArticle->getTitle() == null) {
+            $msg['title'] = false;
+        }
+
+        if ($txpArticle->getBody() == null) {
+            $msg['body'] = false;
+        }
+
+        if ($txpArticle->getCategory1() == null) {
+            $msg['Category1'] = false;
+        }
+
+        if ($txpArticle->getKeywords() == null) {
+            $msg['Keywords'] = false;
+        }
+
+        $userInfos = $this->getUserInfosData($name);
+        if ($userInfos == false) {
+            $msg['name'] = false;
+            $msg['message'][] = "The User does not exist";
+        } else {
+            $txpArticle->setCustom5($userInfos['phone']);
+            $txpArticle->setCustom11($userInfos['last_name']);
+            $txpArticle->setCustom12($userInfos['first_name']);
+            $txpArticle->setCustom17($userInfos['entreprise']);
+        }
+
+        // If there is at least one field that has been incorrectly completed
+        if (!empty($msg)) {
+            $msg['error'] = true;
+            $msg['message'][] = 'Please complete all required fields correctly.';
+        }
+
+        return $msg;
+
+    }
+
     /**
      * @return TextPatternDAO
-     * @throws \Psr\Container\ContainerExceptionInterface
-     * @throws \Psr\Container\NotFoundExceptionInterface
      */
     private function getTextPatternDAO()
     {
-        return $this->ctx->get('textpattern.dao');
+        $dao = null;
+        try {
+            $dao = $this->ctx->get('textpattern.dao');
+        } catch (ContainerExceptionInterface $exception) {
+
+        }
+
+        return $dao;
     }
+
 
     /**
      * @return TextPatternDTO
@@ -142,30 +286,64 @@ class TextPatternCtrl
         $retStatus = [
             'status' => true,
             'message' => 'Registered candidate',
-            'toto' => $dataFromDB['custom_27']
         ];
 
-        //if(count($dataFromDB) > 0)
-        if (!empty($dataFromDB)) {
-            $candidates = explode(',', $dataFromDB['custom_27']);
 
-            if (strlen($dataFromDB['custom_27']) > 0 && !in_array($txpArticle['user'], $candidates)) {
-                $txpDTO->setCustom27($dataFromDB['custom_27'] . ',' . $txpArticle['user']);
-                $retStatus['ici'] = '1er';
-            } elseif (strlen($dataFromDB['custom_27']) == 0) {
-                $retStatus['ici'] = '2e';
-                $txpDTO->setCustom27($txpArticle['user']);
-            } else {
-                $retStatus['ici'] = '3e';
-                $retStatus['status'] = false;
-                $retStatus['message'] = 'You have already applied for this mission';
-            }
-
-        } else {
-            $retStatus['ici'] = 'ee';
+        if ($this->getUserInfosData($txpArticle['user']) == false) {
             $retStatus['status'] = false;
-            $retStatus['message'] = 'Sorry, the mission to which you want to apply does not exist';
+            $retStatus['message'] = 'User does not exist';
+        } else {
+
+            if (!empty($dataFromDB)) {
+                $candidates = explode(',', $dataFromDB['custom_27']);
+
+                if (strlen($dataFromDB['custom_27']) > 0 && !in_array($txpArticle['user'], $candidates)) {
+                    $txpDTO->setCustom27($dataFromDB['custom_27'] . ',' . $txpArticle['user']);
+                    $retStatus['ici'] = '1er';
+                } elseif (strlen($dataFromDB['custom_27']) == 0) {
+                    $retStatus['ici'] = '2e';
+                    $txpDTO->setCustom27($txpArticle['user']);
+                } else {
+                    //$retStatus['ici'] = '3e';
+                    $retStatus['status'] = false;
+                    $retStatus['message'] = 'You have already applied for this mission';
+                }
+
+            } else {
+                //$retStatus['ici'] = 'ee';
+                $retStatus['status'] = false;
+                $retStatus['message'] = 'Sorry, the mission to which you want to apply does not exist';
+            }
         }
+
         return $retStatus;
     }
+
+
+    /**
+     * @param string $name
+     * @return array|boolean
+     */
+    private function getUserInfosData(string $name)
+    {
+        $dao = $this->getUserDAO();
+        $user = $dao->findOneByName($name)->getOneAsArray();
+
+        return $user;
+    }
+
+    /**
+     * @return UserDAO
+     */
+    private function getUserDAO()
+    {
+        $dao = null;
+        try {
+            $dao = $this->ctx->get('user.dao');
+        } catch (ContainerExceptionInterface $exception) {
+        }
+
+        return $dao;
+    }
+
 }
