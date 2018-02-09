@@ -38,6 +38,9 @@ class TextPatternDAO implements ITextPatternDAO
         $this->pdo = $pdo;
     }
 
+    /**
+     * @return $this
+     */
     public function findAll()
     {
         // TODO: Implement findAll() method.
@@ -47,6 +50,10 @@ class TextPatternDAO implements ITextPatternDAO
 
     }
 
+    /**
+     * @param array $pk
+     * @return $this
+     */
     public function findOneById(array $pk)
     {
         // TODO: Implement findOneById() method.
@@ -62,6 +69,12 @@ class TextPatternDAO implements ITextPatternDAO
         return $this;
     }
 
+    /**
+     * @param array $search
+     * @param array $orderBy
+     * @param array $limit
+     * @return $this
+     */
     public function find(array $search = [], array $orderBy = [], array $limit = [])
     {
         // TODO: Implement find() method.
@@ -92,66 +105,6 @@ class TextPatternDAO implements ITextPatternDAO
 
         return $this;
     }
-
-//    public function find(array $search = [], array $orderBy = [], array $limit = [])
-//    {
-//        // TODO: Implement find() method.
-//        $sql = "SELECT * FROM textpattern ";
-//        //$sql = 'SELECT t.*, t1.name AS imageName FROM textpattern t LEFT JOIN txp_image t1 ON t.Image = t1.id ';
-//
-//        if (count($search) > 0) {
-//            $sql .= " WHERE ";
-//            $cols = array_map(
-//                function ($item) {
-//                    return "$item=:$item";
-//                }, array_keys($search)
-//            );
-//
-//            $sql .= implode(" AND ", $cols);
-//        }
-//
-//        $sql = $this->buildOrderByClause($orderBy, $sql);
-//
-//        $sql = $this->buildLimitAndOffsetClause($limit, $sql);
-//
-//        $statement = $this->pdo->prepare($sql);
-//        $statement->execute($search);
-//        $this->selectStatement = $statement;
-//
-//        return $this;
-//
-//    }
-
-//    public function findwithQuery(array $search = [], array $orderBy = [], array $limit = []) {
-//        $sql = "SELECT * FROM textpattern ";
-//        $where = '';
-//        $searchValues = [];
-//
-//        $qb = new QueryBuilder();
-//        $qb->select("*")
-//            ->from("textpattern");
-//
-//        // Build the clause 'where' for the SQL request return the values in array
-//        $searchValues = $this->buildWhereClause($search, $where, $searchValues, $qb);
-//
-//        try {
-//            $sql = $qb->getSQL();
-//        } catch (\Exception $e) {
-//        }
-//
-//        // Build 'ORDER BY' clause
-//        $sql = $this->buildOrderByClause($orderBy, $sql);
-//
-//        // Build 'LIMIT ANT OFFSET' clause
-//        $sql = $this->buildLimitAndOffsetClause($limit, $sql);
-//
-//        $statement = $this->pdo->prepare($sql);
-//        $statement->execute($searchValues);
-//        $this->selectStatement = $statement;
-//
-//        return $this;
-//
-//    }
 
     public function delete(TextPatternDTO $tpArticle)
     {
