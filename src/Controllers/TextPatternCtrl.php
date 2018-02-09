@@ -46,13 +46,20 @@ class TextPatternCtrl
         // filter input 'results' parameter
         $options = ['options' => ['default' => 15, 'min_range' => 0]];
         $nbOfResults = filter_input(INPUT_GET, 'results', FILTER_VALIDATE_INT, $options);
+        $kills = filter_input(INPUT_GET, 'Keywords', FILTER_SANITIZE_STRING);
 
         $search = ['Section' => 'particulier-entreprise'];
 
-        $limits = [$nbOfResults, rand(0, 3680)];
+        if (!empty($kills)) {
+            $search['Keywords'] = explode(',', $kills);
+        }
+
+        $limits = [$nbOfResults, rand(0, 368)];
+//        $limits = [$nbOfResults, rand(0, 3680)];
 
         $personalBusiness = $this->getTextPatternDAO()
-            ->find($search, [], $limits)->getAllAsArray();
+            ->find($search, [], $limits)
+        ->getAllAsArray();
 
         return $response->withJson($personalBusiness);
     }
