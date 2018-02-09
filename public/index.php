@@ -39,7 +39,7 @@ $app = new App([
 require '../src/Config/dependencies.php';
 
 // Chargement des middlewares
-require '../src/Config/Middlewares/middlewares.php';
+// require '../src/Config/Middlewares/middlewares.php';
 
 // Chargement des routes de l'application
 require '../src/Config/Routes/routes.php';

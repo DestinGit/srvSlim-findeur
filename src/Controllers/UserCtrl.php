@@ -12,11 +12,13 @@ use app\DAO\UserDAO;
 use app\Entities\UserDTO;
 use app\Libs\PasswordHash;
 use app\Utils\Utils;
+use Firebase\JWT\JWT;
 use Psr\{
     Container\ContainerExceptionInterface, Container\ContainerInterface, Container\NotFoundExceptionInterface
 };
 use Slim\Http\Request;
 use Slim\Http\Response;
+use Tuupola\Base62;
 
 
 class UserCtrl
@@ -149,46 +151,49 @@ class UserCtrl
     }
 
 
+    /**
+     * @param Request $request
+     * @param Response $response
+     * @return Response $response
+     */
     public function findUserPost2(Request $request, Response $response) {
+        // object for return of the function
+        $result = ['success' => false, 'message' => 'Bad credentials'];
+
         // Retrieving query parameters and encrypting the password and generating the associated salt
         $requestParams = $request->getParams();
 
         $login = $requestParams['username'] ?? '';
-        $search = [
-            //'pass' => $requestParams['password'] ?? ''
-        ];
-
+        $search = [];
         $userPass = $requestParams['password'] ?? '';
 
-        $patternEmail = '/^[^\W][a-zA-Z0-9_]+(\.[a-zA-Z0-9_]+)*\@[a-zA-Z0-9_]+(\.[a-zA-Z0-9_]+)*\.[a-zA-Z]{2,4}$/';
-        $retEmailRegEx = preg_match($patternEmail, $login);
-        if ($retEmailRegEx == false) {
-            $search['name'] = $login;
-        } else {
-            $search['email'] = $login;
-        }
+        // creating the 'name' or 'email' key for the user's search
+        $search = $this->usernameIsNameOrEmail($login, $search);
 
-//        $user = $this->getUserDAO()->find($search, [], [1])->getAllAsArray();
-        $user = $this->getUserDAO()->findOneByNameOrEmail($search['name'] ?? '', $search['email'] ?? '')
+        // Now we can perform the search of user
+        $user = $this->getUserDAO()
+            ->findOneByNameOrEmail($search['name'] ?? '', $search['email'] ?? '')
             ->getOneAsArray();
 
-        $result = ['success' => false,
-            'message' => 'Bad credentials'];
+
+        // if the user exists, check the new hash of his password with his salt
         if ($user != false) {
             $t_hasher = new PasswordHash(8, TRUE);
             $result['success'] = $t_hasher->CheckPassword($userPass, $user['pass']);
         }
 
-
         if ($result['success']) {
-            $result['token'] = $user['nonce'];
+            $result['token'] = $this->getToken($request, $user['name']);
             unset($user['nonce']);
+            unset($user['pass']);
             $result['user'] = $user;
             $result['message'] = 'Successful connection';
         }
 
         return $response->withJson($result);
-
+//            ->withHeader('Access-Control-Allow-Origin', '*')
+//            ->withHeader('Access-Control-Allow-Headers', 'X-Requested-With, Content-Type, Accept, Origin, Authorization')
+//            ->withHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
     }
 
     public function addUserPost(Request $request, Response $response)
@@ -342,7 +347,7 @@ class UserCtrl
         $requestParams['pass'] = isset($requestParams['pass']) && !empty($requestParams['pass']) ?
             $requestParams['pass'] : Utils::generate_password();
 
-$this->password = $requestParams['pass'];
+        $this->password = $requestParams['pass'];
 
         // Force the use of weaker portable hashes. And generate the hash of password
         $t_hasher = new PasswordHash(8, TRUE);
@@ -362,6 +367,8 @@ $this->password = $requestParams['pass'];
              preg_match($patternPassword, 'motDePasse1');
     */
 //        preg_match($pattern, $subject, $matches, PREG_OFFSET_CAPTURE, 3);
+
+
     /**
      * @param UserDTO $userObj
      * @return array
@@ -410,6 +417,12 @@ $this->password = $requestParams['pass'];
         return $msg;
     }
 
+    /**
+     * @param string $mail
+     * @param string $login
+     * @param string $pass
+     * @param string $realname
+     */
     private function sendAnEmailViaTextpattern(string $mail, string $login, string $pass, string $realname) {
         // create curl resource
         $curl = curl_init();
@@ -427,5 +440,60 @@ $this->password = $requestParams['pass'];
         // close curl resource to free up system resources
         curl_close($curl);
 
+    }
+
+    /**
+     * @param string $login
+     * @param array $search
+     * @return array $search
+     */
+    private function usernameIsNameOrEmail(string $login, array $search):array
+    {
+        $patternEmail = '/^[^\W][a-zA-Z0-9_]+(\.[a-zA-Z0-9_]+)*\@[a-zA-Z0-9_]+(\.[a-zA-Z0-9_]+)*\.[a-zA-Z]{2,4}$/';
+        $retEmailRegEx = preg_match($patternEmail, $login);
+        if ($retEmailRegEx == false) {
+            $search['name'] = $login;
+        } else {
+            $search['email'] = $login;
+        }
+        return $search;
+    }
+
+    /**
+     * @param Request $request
+     * @param string|null $name
+     * @param array $roles
+     * @return string
+     */
+    private function getToken(Request $request, string $name = null, array $roles = ["ROLE_USER"]) {
+        $now = new \DateTime();
+        $future = new \DateTime("+10 minutes");
+        $server = $request->getServerParams();
+        $jti = $this->getUniqueID();
+        $payload = [
+            "iat" => $now->getTimeStamp(),
+            "scopes" => $roles,
+            "exp" => $future->getTimeStamp(),
+            "jti" => $jti,
+            "sub" => $server["PHP_AUTH_USER"],
+            "username" => $name
+        ];
+        $secret = getenv('SECRET_KEY_JWT');
+        $token = JWT::encode($payload, $secret, "HS256");
+
+        return $token;
+    }
+
+    /**
+     * @return null|string
+     */
+    private function getUniqueID() {
+        $ret = null;
+        try{
+            $ret = (new Base62)->encode(random_bytes(16));
+        }catch (\Exception $exception) {
+        }
+
+        return $ret;
     }
 }

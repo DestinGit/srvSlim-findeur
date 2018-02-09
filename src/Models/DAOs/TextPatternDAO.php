@@ -8,6 +8,7 @@
 
 namespace app\DAO;
 
+use app\DBMA\QueryBuilder;
 use app\Entities\TextPatternDTO;
 //use Exception;
 
@@ -65,44 +66,92 @@ class TextPatternDAO implements ITextPatternDAO
     {
         // TODO: Implement find() method.
         $sql = "SELECT * FROM textpattern ";
-        //$sql = 'SELECT t.*, t1.name AS imageName FROM textpattern t LEFT JOIN txp_image t1 ON t.Image = t1.id ';
+        $whereSting = '';
+        $searchValues = [];
 
-        if (count($search) > 0) {
-            $sql .= " WHERE ";
-            $cols = array_map(
-                function ($item) {
-                    return "$item=:$item";
-                }, array_keys($search)
-            );
+        $qb = new QueryBuilder();
+        $qb->select("*")->from("textpattern");
 
-            $sql .= implode(" AND ", $cols);
+        // Build the clause 'where' for the SQL request return the values in array
+        $searchValues = $this->buildWhereClause($search, $whereSting, $searchValues, $qb);
+
+        try {
+            $sql = $qb->getSQL();
+        } catch (\Exception $e) {
         }
 
-        if (count($orderBy) > 0) {
-            $sql .= "ORDER BY ";
-            $cols = array_map(
-                function ($item) use ($orderBy) {
-                    return "$item " . $orderBy[$item];
-                },
-                array_keys($orderBy)
-            );
-            $sql .= implode(", ", $cols);
-        }
+        // Build 'ORDER BY' clause
+        $sql = $this->buildOrderByClause($orderBy, $sql);
 
-        if (count($limit) > 0) {
-            $sql .= " LIMIT " . $limit[0];
-            if (isset($limit[1])) {
-                $sql .= " OFFSET " . $limit[1];
-            }
-        }
+        // Build 'LIMIT ANT OFFSET' clause
+        $sql = $this->buildLimitAndOffsetClause($limit, $sql);
 
         $statement = $this->pdo->prepare($sql);
-        $statement->execute($search);
+        $statement->execute($searchValues);
         $this->selectStatement = $statement;
 
         return $this;
-
     }
+
+//    public function find(array $search = [], array $orderBy = [], array $limit = [])
+//    {
+//        // TODO: Implement find() method.
+//        $sql = "SELECT * FROM textpattern ";
+//        //$sql = 'SELECT t.*, t1.name AS imageName FROM textpattern t LEFT JOIN txp_image t1 ON t.Image = t1.id ';
+//
+//        if (count($search) > 0) {
+//            $sql .= " WHERE ";
+//            $cols = array_map(
+//                function ($item) {
+//                    return "$item=:$item";
+//                }, array_keys($search)
+//            );
+//
+//            $sql .= implode(" AND ", $cols);
+//        }
+//
+//        $sql = $this->buildOrderByClause($orderBy, $sql);
+//
+//        $sql = $this->buildLimitAndOffsetClause($limit, $sql);
+//
+//        $statement = $this->pdo->prepare($sql);
+//        $statement->execute($search);
+//        $this->selectStatement = $statement;
+//
+//        return $this;
+//
+//    }
+
+//    public function findwithQuery(array $search = [], array $orderBy = [], array $limit = []) {
+//        $sql = "SELECT * FROM textpattern ";
+//        $where = '';
+//        $searchValues = [];
+//
+//        $qb = new QueryBuilder();
+//        $qb->select("*")
+//            ->from("textpattern");
+//
+//        // Build the clause 'where' for the SQL request return the values in array
+//        $searchValues = $this->buildWhereClause($search, $where, $searchValues, $qb);
+//
+//        try {
+//            $sql = $qb->getSQL();
+//        } catch (\Exception $e) {
+//        }
+//
+//        // Build 'ORDER BY' clause
+//        $sql = $this->buildOrderByClause($orderBy, $sql);
+//
+//        // Build 'LIMIT ANT OFFSET' clause
+//        $sql = $this->buildLimitAndOffsetClause($limit, $sql);
+//
+//        $statement = $this->pdo->prepare($sql);
+//        $statement->execute($searchValues);
+//        $this->selectStatement = $statement;
+//
+//        return $this;
+//
+//    }
 
     public function delete(TextPatternDTO $tpArticle)
     {
@@ -272,6 +321,83 @@ class TextPatternDAO implements ITextPatternDAO
         }
 
         return $data;
+    }
+
+    /**
+     * @param array $search
+     * @param string $where
+     * @param array $searchValues
+     * @param QueryBuilder $qb
+     * @return array $searchValues
+     */
+    private function buildWhereClause(array $search, string $where, array $searchValues, QueryBuilder $qb): array
+    {
+        if (count($search) > 0) {
+
+            foreach ($search as $key => $value) {
+                if (is_array($value)) {
+                    $size = count($value);
+                    for ($i = 0; $i < $size; ++$i) {
+                        $glue = ($i > 0) ? ' OR' : '';
+                        $where .= " $glue $key = ? ";
+
+                        // Save values into an array for the SQL request
+                        $searchValues[] = $value[$i];
+                    }
+                    if ($size > 1) {
+                        $where .= " $glue $key = ? ";
+
+                        // Save values into an array for the SQL request
+                        $searchValues[] = implode(',', $value);
+                    }
+                    $qb->where($where);
+
+                } else {
+                    $qb->where(" $key = ? ");
+
+                    // Save values into an array for the SQL request
+                    $searchValues[] = $value;
+                }
+            }
+
+        }
+        return $searchValues;
+    }
+
+    /**
+     * @param array $orderBy
+     * @param string $sql
+     * @return string $sql
+     */
+    private function buildOrderByClause(array $orderBy, string $sql): string
+    {
+        if (count($orderBy) > 0) {
+            $sql .= "ORDER BY ";
+            $cols = array_map(
+                function ($item) use ($orderBy) {
+                    return "$item " . $orderBy[$item];
+                },
+                array_keys($orderBy)
+            );
+            $sql .= implode(", ", $cols);
+        }
+        return $sql;
+    }
+
+    /**
+     * @param array $limit
+     * @param $sql
+     * @return string
+     */
+    private function buildLimitAndOffsetClause(array $limit, $sql): string
+    {
+        if (count($limit) > 0) {
+            $sql .= " LIMIT " . $limit[0];
+            if (isset($limit[1])) {
+                $sql .= " OFFSET " . $limit[1];
+            }
+        }
+        return $sql;
     }
 
 }

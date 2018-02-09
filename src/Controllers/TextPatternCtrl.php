@@ -48,8 +48,6 @@ class TextPatternCtrl
         $nbOfResults = filter_input(INPUT_GET, 'results', FILTER_VALIDATE_INT, $options);
 
         $search = ['Section' => 'particulier-entreprise'];
-//        $limits = [$nbOfResults, $nbOfResults * 2];
-
 
         $limits = [$nbOfResults, rand(0, 3680)];
 
@@ -86,14 +84,12 @@ class TextPatternCtrl
      * @param Request $request
      * @param Response $response
      * @return Response
-     * @throws ContainerExceptionInterface
-     * @throws NotFoundExceptionInterface
      */
     public function applyToAMission(Request $request, Response $response)
     {
 
         $txpArticle = $request->getParams();
-
+        $txpArticle['user'] = $this->getJWTObj()->username;
 
         $txpDTO = $this->getTextPatternDTO();
         $txpDTO->hydrate($txpArticle);
@@ -105,8 +101,6 @@ class TextPatternCtrl
         $retStatus = $this->checkCandidateBeforeApplyToMission($missionFromDB, $txpArticle, $txpDTO);
 
         if ($retStatus['status']) {
-//            $this->getTextPatternDAO()
-//                ->save($txpDTO)->flush();
             $this->getTextPatternDAO()
                 ->save($txpDTO);
         }
@@ -114,10 +108,15 @@ class TextPatternCtrl
         return $response->withJson($retStatus);
     }
 
-
+    /**
+     * @param Request $request
+     * @param Response $response
+     * @return Response
+     */
     public function addNewMission(Request $request, Response $response)
     {
         $txpArticle = $request->getParams();
+        $txpArticle['AuthorID'] = $this->getJWTObj()->username;;
 
         $txpArticle = $this->initializationOfDefaultValues($txpArticle);
 
@@ -346,4 +345,16 @@ class TextPatternCtrl
         return $dao;
     }
 
+    /**
+     * @return \StdClass
+     */
+    private function getJWTObj() {
+        $jwt = null;
+        try {
+            $jwt = $this->ctx->get('jwt');
+        } catch (ContainerExceptionInterface $exception) {
+        }
+
+        return $jwt;
+    }
 }

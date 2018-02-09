@@ -14,11 +14,18 @@ class ComposerStaticInit8704a1aeb19e4168fd5f18eb57e8204d
         'a' => 
         array (
             'app\\Utils\\' => 10,
+            'app\\Middlewares\\' => 16,
             'app\\Libs\\' => 9,
             'app\\Entities\\' => 13,
             'app\\DBMA\\' => 9,
             'app\\DAO\\' => 8,
             'app\\Controller\\' => 15,
+        ),
+        'T' => 
+        array (
+            'Tuupola\\Middleware\\' => 19,
+            'Tuupola\\Http\\Factory\\' => 21,
+            'Tuupola\\' => 8,
         ),
         'S' => 
         array (
@@ -28,11 +35,17 @@ class ComposerStaticInit8704a1aeb19e4168fd5f18eb57e8204d
         'P' => 
         array (
             'Psr\\Log\\' => 8,
+            'Psr\\Http\\Server\\' => 16,
             'Psr\\Http\\Message\\' => 17,
             'Psr\\Container\\' => 14,
         ),
+        'N' => 
+        array (
+            'Neomerx\\Cors\\' => 13,
+        ),
         'I' => 
         array (
+            'Interop\\Http\\Factory\\' => 21,
             'Interop\\Container\\' => 18,
         ),
         'F' => 
@@ -55,6 +68,10 @@ class ComposerStaticInit8704a1aeb19e4168fd5f18eb57e8204d
         array (
             0 => __DIR__ . '/../..' . '/src/Utils',
         ),
+        'app\\Middlewares\\' => 
+        array (
+            0 => __DIR__ . '/../..' . '/src/Middlewares',
+        ),
         'app\\Libs\\' => 
         array (
             0 => __DIR__ . '/../..' . '/src/Libs',
@@ -75,6 +92,19 @@ class ComposerStaticInit8704a1aeb19e4168fd5f18eb57e8204d
         array (
             0 => __DIR__ . '/../..' . '/src/Controllers',
         ),
+        'Tuupola\\Middleware\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/tuupola/callable-handler/src',
+            1 => __DIR__ . '/..' . '/tuupola/cors-middleware/src',
+        ),
+        'Tuupola\\Http\\Factory\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/tuupola/http-factory/src',
+        ),
+        'Tuupola\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/tuupola/base62/src',
+        ),
         'Slim\\Middleware\\' => 
         array (
             0 => __DIR__ . '/..' . '/tuupola/slim-jwt-auth/src',
@@ -87,6 +117,11 @@ class ComposerStaticInit8704a1aeb19e4168fd5f18eb57e8204d
         array (
             0 => __DIR__ . '/..' . '/psr/log/Psr/Log',
         ),
+        'Psr\\Http\\Server\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/psr/http-server-handler/src',
+            1 => __DIR__ . '/..' . '/psr/http-server-middleware/src',
+        ),
         'Psr\\Http\\Message\\' => 
         array (
             0 => __DIR__ . '/..' . '/psr/http-message/src',
@@ -94,6 +129,14 @@ class ComposerStaticInit8704a1aeb19e4168fd5f18eb57e8204d
         'Psr\\Container\\' => 
         array (
             0 => __DIR__ . '/..' . '/psr/container/src',
+        ),
+        'Neomerx\\Cors\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/neomerx/cors-psr7/src',
+        ),
+        'Interop\\Http\\Factory\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/http-interop/http-factory/src',
         ),
         'Interop\\Container\\' => 
         array (
