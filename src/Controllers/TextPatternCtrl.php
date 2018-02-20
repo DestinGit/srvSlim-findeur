@@ -63,6 +63,34 @@ class TextPatternCtrl
 
         return $response->withJson($personalBusiness);
     }
+    /**
+     * @param Request $request
+     * @param Response $response
+     * @return Response
+     * @throws ContainerExceptionInterface
+     * @throws NotFoundExceptionInterface
+     */
+    public function getOnePersonalBusiness(Request $request, Response $response)
+    {
+        // filter input 'results' parameter
+        $options = ['options' => ['default' => 1, 'min_range' => 1]];
+        $nbOfResults = filter_input(INPUT_GET, 'results', FILTER_VALIDATE_INT, $options);
+        $name = $request->getParam('name');
+        // $kills = filter_input(INPUT_GET, 'Keywords', FILTER_SANITIZE_STRING);
+
+        $search = ['Section' => 'particulier-entreprise','AuthorID' => $name];
+
+//        if (!empty($kills)) {
+//            $search['Keywords'] = explode(',', $kills);
+//        }
+
+        $limits = [$nbOfResults];
+
+        $personalBusiness = $this->getTextPatternDAO()
+            ->find($search, [], $limits)->getOneAsArray();
+
+        return $response->withJson($personalBusiness);
+    }
 
     /**
      * @param Request $request
@@ -74,17 +102,77 @@ class TextPatternCtrl
     public function getListOfMissionsToApply(Request $request, Response $response)
     {
         // filter input 'results' parameter
-        $options = ['options' => ['default' => 5, 'min_range' => 0]];
+        $options = ['options' => ['default' => 15, 'min_range' => 0]];
         $nbOfResults = filter_input(INPUT_GET, 'results', FILTER_VALIDATE_INT, $options);
+        $kills = filter_input(INPUT_GET, 'Keywords', FILTER_SANITIZE_STRING);
 
         $search = ['Section' => 'auto-entrepreneur', 'Status' => 4];
+        if (!empty($kills)) {
+            $search['Keywords'] = explode(',', $kills);
+        }
 
-        $limits = [$nbOfResults, $nbOfResults * 2];
+        // $getMyCandidate = filter_var($request->getParam('me'), FILTER_VALIDATE_BOOLEAN);
 
-        $missionsToApply = $this->getTextPatternDAO()
+        $limits = [$nbOfResults, rand(0, 36)];
+
+            $missionsToApply = $this->getTextPatternDAO()
             ->find($search, [], $limits)->getAllAsArray();
 
         return $response->withJson($missionsToApply);
+    }
+
+    /**
+     * @param Request $request
+     * @param Response $response
+     * @return Response
+     */
+    public function getListOfMyProjects(Request $request, Response $response)
+    {
+        // filter input 'results' parameter
+        $options = ['options' => ['default' => 15, 'min_range' => 0]];
+        $nbOfResults = filter_input(INPUT_GET, 'results', FILTER_VALIDATE_INT, $options);
+        $kills = filter_input(INPUT_GET, 'Keywords', FILTER_SANITIZE_STRING);
+
+        $user = $this->getJWTObj()->username;
+//        $search = ['Section' => 'auto-entrepreneur', 'Status' => 4, 'AuthorID' => $user];
+        $search = ['Section' => 'auto-entrepreneur', 'AuthorID' => $user];
+
+        if (!empty($kills)) {
+            $search['Keywords'] = explode(',', $kills);
+        }
+
+        $limits = [$nbOfResults];
+
+        $myProjects = $this->getTextPatternDAO()
+            ->find($search, [], $limits)->getAllAsArray();
+
+        return $response->withJson($myProjects);
+    }
+
+    /**
+     * @param Request $request
+     * @param Response $response
+     * @return Response
+     */
+    public function getListsOfMyCandidatures(Request $request, Response $response) {
+        // filter input 'results' parameter
+        $options = ['options' => ['default' => 15, 'min_range' => 0]];
+        $nbOfResults = filter_input(INPUT_GET, 'results', FILTER_VALIDATE_INT, $options);
+        $kills = filter_input(INPUT_GET, 'Keywords', FILTER_SANITIZE_STRING);
+
+        $user = $this->getJWTObj()->username;
+        $search = ['Section' => 'auto-entrepreneur', 'Status' => 4, 'Custom_27' => "%$user%"];
+
+        if (!empty($kills)) {
+            $search['Keywords'] = explode(',', $kills);
+        }
+
+        //$limits = [$nbOfResults, rand(0, 36)];
+        $limits = [$nbOfResults];
+        $myCandidatures = $this->getTextPatternDAO()
+            ->find($search, [], $limits)->getAllAsArray();
+
+        return $response->withJson($myCandidatures);
     }
 
     /**
@@ -120,10 +208,10 @@ class TextPatternCtrl
      * @param Response $response
      * @return Response
      */
-    public function addNewMission(Request $request, Response $response)
+    public function persistArticle(Request $request, Response $response)
     {
         $txpArticle = $request->getParams();
-        $txpArticle['AuthorID'] = $this->getJWTObj()->username;;
+        $txpArticle['AuthorID'] = $this->getJWTObj()->username;
 
         $txpArticle = $this->initializationOfDefaultValues($txpArticle);
 
@@ -137,6 +225,8 @@ class TextPatternCtrl
         if (empty($msg)) {
             $dao = $this->getTextPatternDAO();
             $dao->save($txpDTO);
+            $msg['success'] = true;
+            $msg['ID'] = $txpDTO->getID();
         }
 
         return $response->withJson($msg);
@@ -148,25 +238,29 @@ class TextPatternCtrl
      */
     private function initializationOfDefaultValues(array $txpArticle)
     {
+        $date = new \DateTime();
+        $dateNow = $date->format('Y-m-d H:i:s');
+
         if (!isset($txpArticle['Posted']) || empty($txpArticle['Posted'])) {
-            $date = new \DateTime();
-            $txpArticle['Posted'] = $date->format('Y-m-d H:i:s');
+            $txpArticle['Posted'] = $dateNow;
         }
 
+        $txpArticle['LastMod'] = (!isset($txpArticle['LastMod']) || empty($txpArticle['LastMod'])) ? $dateNow : 0;
+
+        $txpArticle['LastModID'] = (!empty($txpArticle['ID'])) ? $txpArticle['AuthorID'] : '';
+
         $txpArticle['Section'] = 'auto-entrepreneur';
-        $txpArticle['Status'] = 3;
+        $txpArticle['Status'] = 4;
         $txpArticle['Annotate'] = 0;
         $txpArticle['url_title'] = urlencode($txpArticle['Title']);
         $txpArticle['custom_1'] = 'actif';
         $txpArticle['Expires'] = 0;
-        $txpArticle['LastMod'] = 0;
+        // $txpArticle['LastMod'] = 0;
         $txpArticle['comments_count'] = 0;
         $txpArticle['textile_body'] = 1;
         $txpArticle['textile_excerpt'] = 1;
         $txpArticle['feed_time'] = 0;
 
-        if (!isset($txpArticle['LastModID']) || empty($txpArticle['LastModID']))
-            $txpArticle['LastModID'] = $txpArticle['AuthorID'] ?? '';
 
         if (isset($txpArticle['Title_html']) || empty($txpArticle['Title_html']))
             $txpArticle['Title_html'] = $txpArticle['Title'] ?? '';

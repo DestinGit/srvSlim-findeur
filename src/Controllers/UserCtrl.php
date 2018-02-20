@@ -1,10 +1,4 @@
 <?php
-/**
- * Created by Destin Gando.
- * User: Destin
- * Date: 15/12/2017
- * Time: 16:17
- */
 
 namespace app\Controller;
 
@@ -191,9 +185,6 @@ class UserCtrl
         }
 
         return $response->withJson($result);
-//            ->withHeader('Access-Control-Allow-Origin', '*')
-//            ->withHeader('Access-Control-Allow-Headers', 'X-Requested-With, Content-Type, Accept, Origin, Authorization')
-//            ->withHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
     }
 
     public function addUserPost(Request $request, Response $response)
@@ -203,7 +194,11 @@ class UserCtrl
         $requestParams = $this->cryptPassAndNonceFromRequestParams($requestParams);
 
         // Give a default privilege for the user
-        $requestParams['privs'] = 5;
+        if (!is_numeric($requestParams['privs']) ||
+            ($requestParams['privs'] != 4 && $requestParams['privs'] != 6)) {
+            $requestParams['privs'] = 6;
+        }
+
         $requestParams['lastAccess'] = 0;
         if (!isset($requestParams['realName']) || empty($requestParams['realName'])) {
             $requestParams['realName'] .= $requestParams['first_name'] ?? '';

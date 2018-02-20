@@ -16,11 +16,11 @@ $container['database'] = [
 ];
 
 
-/*$container['database'] = [
-    'user' => getenv('DB_USER'),
-    'password' => getenv('DB_PASS'),
-    'dsn' => getenv('DATABASE_DSN')
-];*/
+//$container['database'] = [
+//    'user' => getenv('DB_USER'),
+//    'password' => getenv('DB_PASS'),
+//    'dsn' => getenv('DATABASE_DSN')
+//];
 
 // Récupération de la configuration
 $container['pdo'] = function (ContainerInterface $container) {
@@ -52,7 +52,6 @@ $container['pdo'] = function (ContainerInterface $container) {
  */
 $container['user.dao'] = function (ContainerInterface $container) {
     $pdo = $container->get('pdo');
-
     return new \app\DAO\UserDAO($pdo);
 };
 
@@ -133,7 +132,7 @@ $container['JwtAuthentication'] = function (ContainerInterface $container) {
             new \Slim\Middleware\JwtAuthentication\RequestPathRule([
                 "path" => "/",
                 // "passthrough" => ["/user/find", "/missions-list"]
-                "passthrough" => ["/get/user", "/get/freelance-list", "/get/missions-list", "/get/test"]
+                "passthrough" => ["/get/user", "/get/add-user", "/get/freelance-list", "/get/missions-list", "/get/test"]
             ]),
             new \Slim\Middleware\JwtAuthentication\RequestMethodRule([
                 "passthrough" => ["OPTIONS"]

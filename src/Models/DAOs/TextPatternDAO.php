@@ -185,12 +185,16 @@ class TextPatternDAO implements ITextPatternDAO
 
     /**
      * @param TextPatternDTO $tpArticle
+     * @return bool
      */
     private function update(TextPatternDTO $tpArticle)
     {
-         $sql = "UPDATE textpattern SET custom_27 = ? WHERE id = ? ";
-//        $sql = "UPDATE textpattern SET custom_27 = CONCAT_WS(',', custom_27, ? )
-//                WHERE id = ? ";
+        $ret = true;
+
+         $sql = "UPDATE textpattern SET Title = ?, Category1 = ?, Keywords = ?, custom_3 = ?, custom_27 = ?, Body = ?,
+                  LastMod = ?, LastModID = ? 
+                 WHERE id = ? ";
+//         $sql = "UPDATE textpattern SET custom_27 = ? WHERE id = ? ";
         try {
             // Prepare the statement for update data
             if ($this->cudPreparedStatement == null) {
@@ -199,16 +203,19 @@ class TextPatternDAO implements ITextPatternDAO
 
             // Associates a value with a parameter
             // and execute UPDATE prepared request
-            $this->cudPreparedStatement->execute([
-                $tpArticle->getCustom27(),
-
+            $ret = $this->cudPreparedStatement->execute([
+                $tpArticle->getTitle(), $tpArticle->getCategory1(), $tpArticle->getKeywords(),
+                $tpArticle->getCustom3(), $tpArticle->getCustom27(), $tpArticle->getBody(),
+                $tpArticle->getLastMod(), $tpArticle->getLastModID(),
                 // Must be at the end of the table
                 $tpArticle->getID()
             ]);
-
         } catch (\PDOException $exception) {
+            // echo $exception->getMessage();
 //            $this->pdo->rollBack();
         }
+
+        return $ret;
     }
 
     /**
@@ -306,7 +313,7 @@ class TextPatternDAO implements ITextPatternDAO
                     $qb->where($where);
 
                 } else {
-                    $qb->where(" $key = ? ");
+                    $qb->where(" $key LIKE ? ");
 
                     // Save values into an array for the SQL request
                     $searchValues[] = $value;

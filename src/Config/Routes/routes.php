@@ -13,17 +13,21 @@ use Slim\Http\Request;
 
 
 $app->add('CorsMiddleware');
-$app->add('JwtAuthentication');
+//$app->add('JwtAuthentication');
 
 // Routes public
 $app->group('/get', function () use ($app) {
     // Utiliser pour la connexion
     $app->post('/user', app\Controller\UserCtrl::class . ":findUserPost2");
     // Pour l'inscription
-    $app->post('/add', app\Controller\UserCtrl::class . ":addUserPost");
+    $app->post('/add-user', app\Controller\UserCtrl::class . ":addUserPost");
 
     // Routes pour les services proposés par des freelances
     $app->get('/freelance-list', app\Controller\TextPatternCtrl::class . ':getPersonalBusiness');
+
+    // Routes pour récupérer un freelance
+    $app->get('/freelance', app\Controller\TextPatternCtrl::class . ':getOnePersonalBusiness');
+
     // Routes pour les missions proposées par les entreprises
     $app->get('/missions-list', app\Controller\TextPatternCtrl::class . ':getListOfMissionsToApply');
 
@@ -32,9 +36,12 @@ $app->group('/get', function () use ($app) {
 $app->group('/secure', function () use ($app) {
     // Route pour poster une annonce ou postuler à une mission
     $app->post('/applytomission',app\Controller\TextPatternCtrl::class . ':applyToAMission');
-    $app->post('/newmission', app\Controller\TextPatternCtrl::class . ':addNewMission');
+    $app->post('/registermission', app\Controller\TextPatternCtrl::class . ':persistArticle');
 
-});
+    $app->get('/mycandidatures-list', app\Controller\TextPatternCtrl::class . ':getListsOfMyCandidatures');
+
+    $app->get('/myprojects-list',app\Controller\TextPatternCtrl::class . ':getListOfMyProjects');
+})->add('JwtAuthentication');
 
 
 
