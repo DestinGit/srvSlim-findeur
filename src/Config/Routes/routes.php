@@ -31,6 +31,8 @@ $app->group('/get', function () use ($app) {
     // Routes pour les missions proposées par les entreprises
     $app->get('/missions-list', app\Controller\TextPatternCtrl::class . ':getListOfMissionsToApply');
 
+    $app->get('/skills-list', app\Controller\CategoryCtrl::class . ':getAllSkills');
+
 });
 
 $app->group('/secure', function () use ($app) {

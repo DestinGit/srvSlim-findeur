@@ -146,6 +146,9 @@ class TextPatternCtrl
         $myProjects = $this->getTextPatternDAO()
             ->find($search, [], $limits)->getAllAsArray();
 
+        // clean datas by remove the '-' character
+        $myProjects = $this->cleanDatas($myProjects);
+
         return $response->withJson($myProjects);
     }
 
@@ -366,7 +369,7 @@ class TextPatternCtrl
      */
     private function getTextPatternDTO()
     {
-        $dao = null;
+        $dto = null;
         try {
             $dto = $this->ctx->get('textpattern.dto');
         } catch (ContainerExceptionInterface $exception) {
@@ -457,5 +460,42 @@ class TextPatternCtrl
         }
 
         return $jwt;
+    }
+
+    /**
+     * @param array $myProjects
+     * @return array
+     */
+    private function cleanDatas(array $myProjects):array
+    {
+        $retArray = [];
+        $element = [];
+
+        foreach ($myProjects as $firstKey => $arr) {
+
+            $element['candidates'] = [];
+
+            foreach ($arr as $key => $value) {
+                $val = '';
+
+                if (strlen($value) != 1 && $value != '-') {
+                    $val = $value;
+                }
+//                if (strlen($value) == 1 && $value == '-') {
+//                    $arr[$key] = '';
+//                }
+
+                if ($key == 'custom_27' && strlen($arr[$key]) > 0 && $arr[$key] != '-') {
+                    $element['candidates'] = explode(',', $arr[$key]);
+                }
+
+                $element[$key] = $val;
+            }
+
+            $retArray[$firstKey] = $element;
+            //$retArray[$firstKey] = $arr;
+        }
+
+        return $retArray;
     }
 }

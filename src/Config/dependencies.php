@@ -9,18 +9,18 @@ use Tuupola\Middleware\CorsMiddleware;
 $container = $app->getContainer();
 $container['appConfig'] = ['appName' => getenv('APP_NAME'), 'maintenance' => getenv('APP_STATUS')];
 
-$container['database'] = [
-    'user' => 'root',
-    'password' => '',
-    'dsn' => 'mysql:host=127.0.0.1;dbname=findeurDBTest;charset=utf8'
-];
-
-
 //$container['database'] = [
-//    'user' => getenv('DB_USER'),
-//    'password' => getenv('DB_PASS'),
-//    'dsn' => getenv('DATABASE_DSN')
+//    'user' => 'root',
+//    'password' => '',
+//    'dsn' => 'mysql:host=127.0.0.1;dbname=findeurDBTest;charset=utf8'
 //];
+
+
+$container['database'] = [
+    'user' => getenv('DB_USER'),
+    'password' => getenv('DB_PASS'),
+    'dsn' => getenv('DATABASE_DSN')
+];
 
 // Récupération de la configuration
 $container['pdo'] = function (ContainerInterface $container) {
@@ -83,6 +83,25 @@ $container['textpattern.dto'] = function () {
 };
 
 /**
+ * @param ContainerInterface $container
+ * @return \app\DAO\CategoryDAO
+ * @throws \Psr\Container\ContainerExceptionInterface
+ * @throws \Psr\Container\NotFoundExceptionInterface
+ */
+$container['category.dao'] = function (ContainerInterface $container) {
+    $pdo = $container->get('pdo');
+    return new app\DAO\CategoryDAO($pdo);
+};
+
+/**
+ * @return \app\Entities\CategoryDTO
+ */
+$container['category.dto'] = function () {
+    return new app\Entities\CategoryDTO();
+};
+
+
+/**
  * @return \CorsSlim\CorsSlim
  */
 $container['CorsMiddleware'] = function () {
@@ -132,7 +151,8 @@ $container['JwtAuthentication'] = function (ContainerInterface $container) {
             new \Slim\Middleware\JwtAuthentication\RequestPathRule([
                 "path" => "/",
                 // "passthrough" => ["/user/find", "/missions-list"]
-                "passthrough" => ["/get/user", "/get/add-user", "/get/freelance-list", "/get/missions-list", "/get/test"]
+                "passthrough" => ["/get/user", "/get/add-user", "/get/freelance-list",
+                    "/get/missions-list", "/get/test", '/get/skills-list']
             ]),
             new \Slim\Middleware\JwtAuthentication\RequestMethodRule([
                 "passthrough" => ["OPTIONS"]

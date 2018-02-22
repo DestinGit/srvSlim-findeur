@@ -34,7 +34,6 @@ $app = new App([
 
 //$app = new App($config);
 
-
 // Chargement de la dépendence sur la configuration et la connexion à la BD
 require '../src/Config/dependencies.php';
 
