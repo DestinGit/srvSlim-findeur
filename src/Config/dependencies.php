@@ -9,18 +9,18 @@ use Tuupola\Middleware\CorsMiddleware;
 $container = $app->getContainer();
 $container['appConfig'] = ['appName' => getenv('APP_NAME'), 'maintenance' => getenv('APP_STATUS')];
 
-//$container['database'] = [
-//    'user' => 'root',
-//    'password' => '',
-//    'dsn' => 'mysql:host=127.0.0.1;dbname=findeurDBTest;charset=utf8'
-//];
-
-
 $container['database'] = [
-    'user' => getenv('DB_USER'),
-    'password' => getenv('DB_PASS'),
-    'dsn' => getenv('DATABASE_DSN')
+    'user' => 'root',
+    'password' => '',
+    'dsn' => 'mysql:host=127.0.0.1;dbname=findeurDBTest;charset=utf8'
 ];
+
+
+//$container['database'] = [
+//    'user' => getenv('DB_USER'),
+//    'password' => getenv('DB_PASS'),
+//    'dsn' => getenv('DATABASE_DSN')
+//];
 
 // Récupération de la configuration
 $container['pdo'] = function (ContainerInterface $container) {

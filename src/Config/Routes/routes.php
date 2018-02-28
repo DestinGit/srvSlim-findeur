@@ -31,7 +31,14 @@ $app->group('/get', function () use ($app) {
     // Routes pour les missions proposées par les entreprises
     $app->get('/missions-list', app\Controller\TextPatternCtrl::class . ':getListOfMissionsToApply');
 
+    // Routes pour récupérer la liste des compétences
     $app->get('/skills-list', app\Controller\CategoryCtrl::class . ':getAllSkills');
+
+    // Routes pour récupérer la liste des régions
+    $app->get('/area-list', app\Controller\CategoryCtrl::class . ':getAllsArea');
+
+    // Routes pour récupérer la liste des mobilités
+    $app->get('/mobility-list', app\Controller\CategoryCtrl::class . ':getAllsMobilities');
 
 });
 
@@ -39,6 +46,8 @@ $app->group('/secure', function () use ($app) {
     // Route pour poster une annonce ou postuler à une mission
     $app->post('/applytomission',app\Controller\TextPatternCtrl::class . ':applyToAMission');
     $app->post('/registermission', app\Controller\TextPatternCtrl::class . ':persistArticle');
+
+    $app->post('/remove', app\Controller\TextPatternCtrl::class . ':deleteArticle');
 
     $app->get('/mycandidatures-list', app\Controller\TextPatternCtrl::class . ':getListsOfMyCandidatures');
 

@@ -106,10 +106,24 @@ class TextPatternDAO implements ITextPatternDAO
         return $this;
     }
 
+    /**
+     * @param TextPatternDTO $tpArticle
+     * @return bool|string
+     */
     public function delete(TextPatternDTO $tpArticle)
     {
         // TODO: Implement delete() method.
+        $sql = 'DELETE FROM textpattern WHERE id = ?';
+        $status = false;
+        try{
+            $this->selectStatement = $this->pdo->prepare($sql);
+            $status = $this->selectStatement->execute([$tpArticle->getID()]);
+        } catch (\PDOException $exception) {
+        }
+
+        return $status;
     }
+
 
     /**
      * @param TextPatternDTO $tpArticle
@@ -192,7 +206,7 @@ class TextPatternDAO implements ITextPatternDAO
         $ret = true;
 
          $sql = "UPDATE textpattern SET Title = ?, Category1 = ?, Keywords = ?, custom_3 = ?, custom_27 = ?, Body = ?,
-                  LastMod = ?, LastModID = ? 
+                  LastMod = ?, LastModID = ?, Status = ?, custom_1 = ? 
                  WHERE id = ? ";
 //         $sql = "UPDATE textpattern SET custom_27 = ? WHERE id = ? ";
         try {
@@ -206,7 +220,8 @@ class TextPatternDAO implements ITextPatternDAO
             $ret = $this->cudPreparedStatement->execute([
                 $tpArticle->getTitle(), $tpArticle->getCategory1(), $tpArticle->getKeywords(),
                 $tpArticle->getCustom3(), $tpArticle->getCustom27(), $tpArticle->getBody(),
-                $tpArticle->getLastMod(), $tpArticle->getLastModID(),
+                $tpArticle->getLastMod(), $tpArticle->getLastModID(), $tpArticle->getStatus(),
+                $tpArticle->getCustom1(),
                 // Must be at the end of the table
                 $tpArticle->getID()
             ]);
@@ -285,18 +300,21 @@ class TextPatternDAO implements ITextPatternDAO
 
     /**
      * @param array $search
-     * @param string $where
+     * @param string $initialWhere
      * @param array $searchValues
      * @param QueryBuilder $qb
      * @return array $searchValues
      */
-    private function buildWhereClause(array $search, string $where, array $searchValues, QueryBuilder $qb): array
+    private function buildWhereClause(array $search, string $initialWhere, array $searchValues, QueryBuilder $qb): array
     {
         if (count($search) > 0) {
 
             foreach ($search as $key => $value) {
+
                 if (is_array($value)) {
+                    $where = $initialWhere;
                     $size = count($value);
+
                     for ($i = 0; $i < $size; ++$i) {
                         $glue = ($i > 0) ? ' OR' : '';
                         $where .= " $glue $key = ? ";
@@ -313,10 +331,13 @@ class TextPatternDAO implements ITextPatternDAO
                     $qb->where($where);
 
                 } else {
-                    $qb->where(" $key LIKE ? ");
+                    $qb->where($value);
+                    $searchValues[] = $key;
+
+     //               $qb->where(" $key LIKE ? ");
 
                     // Save values into an array for the SQL request
-                    $searchValues[] = $value;
+    //                $searchValues[] = $value;
                 }
             }
 
@@ -332,7 +353,7 @@ class TextPatternDAO implements ITextPatternDAO
     private function buildOrderByClause(array $orderBy, string $sql): string
     {
         if (count($orderBy) > 0) {
-            $sql .= "ORDER BY ";
+            $sql .= " ORDER BY ";
             $cols = array_map(
                 function ($item) use ($orderBy) {
                     return "$item " . $orderBy[$item];

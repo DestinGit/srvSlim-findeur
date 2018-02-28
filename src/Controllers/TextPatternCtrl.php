@@ -43,23 +43,28 @@ class TextPatternCtrl
      */
     public function getPersonalBusiness(Request $request, Response $response)
     {
+        $search = ['particulier-entreprise' => 'Section LIKE ?'];
+
         // filter input 'results' parameter
         $options = ['options' => ['default' => 15, 'min_range' => 0]];
         $nbOfResults = filter_input(INPUT_GET, 'results', FILTER_VALIDATE_INT, $options);
+
         $kills = filter_input(INPUT_GET, 'Keywords', FILTER_SANITIZE_STRING);
-
-        $search = ['Section' => 'particulier-entreprise'];
-
         if (!empty($kills)) {
             $search['Keywords'] = explode(',', $kills);
         }
 
-        $limits = [$nbOfResults, rand(0, 368)];
-//        $limits = [$nbOfResults, rand(0, 3680)];
+        $fromCrDat = filter_input(INPUT_GET, 'fromCrDat', FILTER_SANITIZE_STRING);
+        if (!empty($fromCrDat)) {
+            $search[$fromCrDat] = 'Posted < ?';
+        }
+        // $search = ['Section' => 'particulier-entreprise'];
+        // $search = ['particulier-entreprise' => 'Section LIKE ?', '2018-01-26 15:05:29' => 'Posted < ?'];
+
+        $limits = [$nbOfResults];
 
         $personalBusiness = $this->getTextPatternDAO()
-            ->find($search, [], $limits)
-        ->getAllAsArray();
+            ->find($search, ['Posted' => 'DESC'], $limits)->getAllAsArray();
 
         return $response->withJson($personalBusiness);
     }
@@ -78,7 +83,8 @@ class TextPatternCtrl
         $name = $request->getParam('name');
         // $kills = filter_input(INPUT_GET, 'Keywords', FILTER_SANITIZE_STRING);
 
-        $search = ['Section' => 'particulier-entreprise','AuthorID' => $name];
+        // $search = ['Section' => 'particulier-entreprise','AuthorID' => $name];
+        $search = ['particulier-entreprise' => 'Section LIKE ?', 'AuthorID' => [$name]];
 
 //        if (!empty($kills)) {
 //            $search['Keywords'] = explode(',', $kills);
@@ -101,22 +107,30 @@ class TextPatternCtrl
      */
     public function getListOfMissionsToApply(Request $request, Response $response)
     {
+        $search = ['auto-entrepreneur' => 'Section LIKE ?', 'Status' => [4]];
+
         // filter input 'results' parameter
         $options = ['options' => ['default' => 15, 'min_range' => 0]];
         $nbOfResults = filter_input(INPUT_GET, 'results', FILTER_VALIDATE_INT, $options);
         $kills = filter_input(INPUT_GET, 'Keywords', FILTER_SANITIZE_STRING);
 
-        $search = ['Section' => 'auto-entrepreneur', 'Status' => 4];
+        $fromCrDat = filter_input(INPUT_GET, 'fromCrDat', FILTER_SANITIZE_STRING);
+        if (!empty($fromCrDat)) {
+            $search[$fromCrDat] = 'Posted < ?';
+        }
+
+        //$search = ['Section' => 'auto-entrepreneur', 'Status' => 4];
+
         if (!empty($kills)) {
             $search['Keywords'] = explode(',', $kills);
         }
 
         // $getMyCandidate = filter_var($request->getParam('me'), FILTER_VALIDATE_BOOLEAN);
 
-        $limits = [$nbOfResults, rand(0, 36)];
+        $limits = [$nbOfResults];
 
             $missionsToApply = $this->getTextPatternDAO()
-            ->find($search, [], $limits)->getAllAsArray();
+            ->find($search, ['Posted' => 'DESC'], $limits)->getAllAsArray();
 
         return $response->withJson($missionsToApply);
     }
@@ -128,14 +142,20 @@ class TextPatternCtrl
      */
     public function getListOfMyProjects(Request $request, Response $response)
     {
+        $user = $this->getJWTObj()->username;
+        $search = ['auto-entrepreneur' => 'Section LIKE ?', 'AuthorID' => [$user]];
+
         // filter input 'results' parameter
         $options = ['options' => ['default' => 15, 'min_range' => 0]];
         $nbOfResults = filter_input(INPUT_GET, 'results', FILTER_VALIDATE_INT, $options);
         $kills = filter_input(INPUT_GET, 'Keywords', FILTER_SANITIZE_STRING);
 
-        $user = $this->getJWTObj()->username;
+        $fromCrDat = filter_input(INPUT_GET, 'fromCrDat', FILTER_SANITIZE_STRING);
+        if (!empty($fromCrDat)) {
+            $search[$fromCrDat] = 'Posted < ?';
+        }
+
 //        $search = ['Section' => 'auto-entrepreneur', 'Status' => 4, 'AuthorID' => $user];
-        $search = ['Section' => 'auto-entrepreneur', 'AuthorID' => $user];
 
         if (!empty($kills)) {
             $search['Keywords'] = explode(',', $kills);
@@ -147,7 +167,7 @@ class TextPatternCtrl
             ->find($search, [], $limits)->getAllAsArray();
 
         // clean datas by remove the '-' character
-        $myProjects = $this->cleanDatas($myProjects);
+        $myProjects = $this->cleanDatas($myProjects, '-');
 
         return $response->withJson($myProjects);
     }
@@ -158,13 +178,20 @@ class TextPatternCtrl
      * @return Response
      */
     public function getListsOfMyCandidatures(Request $request, Response $response) {
+        $user = $this->getJWTObj()->username;
+        $search = ['auto-entrepreneur' => 'Section LIKE ?', 'Status' => [4], "%$user%" => 'Custom_27 LIKE ?'];
+
         // filter input 'results' parameter
         $options = ['options' => ['default' => 15, 'min_range' => 0]];
         $nbOfResults = filter_input(INPUT_GET, 'results', FILTER_VALIDATE_INT, $options);
         $kills = filter_input(INPUT_GET, 'Keywords', FILTER_SANITIZE_STRING);
 
-        $user = $this->getJWTObj()->username;
-        $search = ['Section' => 'auto-entrepreneur', 'Status' => 4, 'Custom_27' => "%$user%"];
+        $fromCrDat = filter_input(INPUT_GET, 'fromCrDat', FILTER_SANITIZE_STRING);
+        if (!empty($fromCrDat)) {
+            $search[$fromCrDat] = 'Posted < ?';
+        }
+
+        //$search = ['Section' => 'auto-entrepreneur', 'Status' => 4, 'Custom_27' => "%$user%"];
 
         if (!empty($kills)) {
             $search['Keywords'] = explode(',', $kills);
@@ -236,6 +263,31 @@ class TextPatternCtrl
     }
 
     /**
+     * @param Request $request
+     * @param Response $response
+     * @return Response
+     */
+    public function deleteArticle(Request $request, Response $response) {
+        $txpArticle = $request->getParams();
+        $txpArticle['AuthorID'] = $this->getJWTObj()->username;
+
+        $txpDTO = $this->getTextPatternDTO();
+        $txpDTO->hydrate($txpArticle);
+
+        $dao = $this->getTextPatternDAO();
+        $article = $dao->findOneById([$txpDTO->getID()])
+            ->getOneAsArray();
+
+        $msg['success'] = false;
+
+        if ($article && ($article['AuthorID'] == $txpArticle['AuthorID'])) {
+            $msg['success'] = $dao->delete($txpDTO);
+        }
+
+        return $response->withJson($msg);
+    }
+
+    /**
      * @param array $txpArticle
      * @return array $txpArticle
      */
@@ -252,26 +304,31 @@ class TextPatternCtrl
 
         $txpArticle['LastModID'] = (!empty($txpArticle['ID'])) ? $txpArticle['AuthorID'] : '';
 
+        // Si no status, par default actif
+        $txpArticle['Status'] = $txpArticle['Status'] ?? 4;
+        if ($txpArticle['Status'] == 4) {
+            $txpArticle['custom_1'] = 'actif';
+        } else {
+            $txpArticle['custom_1'] = 'inactif';
+        }
+
         $txpArticle['Section'] = 'auto-entrepreneur';
-        $txpArticle['Status'] = 4;
-        $txpArticle['Annotate'] = 0;
-        $txpArticle['url_title'] = urlencode($txpArticle['Title']);
-        $txpArticle['custom_1'] = 'actif';
-        $txpArticle['Expires'] = 0;
-        // $txpArticle['LastMod'] = 0;
-        $txpArticle['comments_count'] = 0;
-        $txpArticle['textile_body'] = 1;
-        $txpArticle['textile_excerpt'] = 1;
-        $txpArticle['feed_time'] = 0;
+        $txpArticle['Annotate'] = $txpArticle['Annotate'] ?? 0;
+        $txpArticle['url_title'] = $txpArticle['url_title'] ?? urlencode($txpArticle['Title']);
 
+        $txpArticle['Expires'] = $txpArticle['Expires'] ?? 0;
+        $txpArticle['comments_count'] = $txpArticle['comments_count'] ?? 0;
+        $txpArticle['textile_body'] = $txpArticle['textile_body'] ?? 1;
+        $txpArticle['textile_excerpt'] = $txpArticle['textile_excerpt'] ?? 1;
+        $txpArticle['feed_time'] = $txpArticle['feed_time'] ?? 0;
 
-        if (isset($txpArticle['Title_html']) || empty($txpArticle['Title_html']))
+        if (!isset($txpArticle['Title_html']) || empty($txpArticle['Title_html']))
             $txpArticle['Title_html'] = $txpArticle['Title'] ?? '';
 
-        if (!isset($txpArticle['Excerpt_html']) || empty($txpArticle['Excerpt_html']))
+        if (!isset($txpArticle['Body_html']) || empty($txpArticle['Body_html']))
             $txpArticle['Body_html'] = $txpArticle['Body'] ?? '';
 
-        if (!isset($txpArticle['Excerpt_html']) || empty($txpArticle['Excerpt_html']))
+        if (!isset($txpArticle['Excerpt']) || empty($txpArticle['Excerpt']))
             $txpArticle['Excerpt'] = $txpArticle['Body'] ?? '';
 
         if (!isset($txpArticle['Excerpt_html']) || empty($txpArticle['Excerpt_html']))
@@ -294,7 +351,7 @@ class TextPatternCtrl
         }
 
         for ($i = 1; $i <= 34; ++$i) {
-            if (!isset($txpArticle['custom_' . $i]) || empty($txpArticle['custom_' . $i])) {
+            if ($i != 27 && (!isset($txpArticle['custom_' . $i]) || empty($txpArticle['custom_' . $i]))) {
                 $txpArticle['custom_' . $i] = '-';
             }
         }
@@ -332,6 +389,7 @@ class TextPatternCtrl
             $msg['name'] = false;
             $msg['message'][] = "The User does not exist";
         } else {
+            $txpArticle->setCustom4($userInfos['phone']);
             $txpArticle->setCustom5($userInfos['phone']);
             $txpArticle->setCustom11($userInfos['last_name']);
             $txpArticle->setCustom12($userInfos['first_name']);
@@ -464,9 +522,10 @@ class TextPatternCtrl
 
     /**
      * @param array $myProjects
+     * @param string $str
      * @return array
      */
-    private function cleanDatas(array $myProjects):array
+    private function cleanDatas(array $myProjects, string $str):array
     {
         $retArray = [];
         $element = [];
@@ -476,24 +535,20 @@ class TextPatternCtrl
             $element['candidates'] = [];
 
             foreach ($arr as $key => $value) {
-                $val = '';
 
-                if (strlen($value) != 1 && $value != '-') {
-                    $val = $value;
-                }
-//                if (strlen($value) == 1 && $value == '-') {
-//                    $arr[$key] = '';
-//                }
-
-                if ($key == 'custom_27' && strlen($arr[$key]) > 0 && $arr[$key] != '-') {
+                if ($key == 'custom_27' && strlen($arr[$key]) > 0 && $arr[$key] != $str) {
                     $element['candidates'] = explode(',', $arr[$key]);
+                }
+
+                $val = $value;
+                if (strlen($value) == 1 && $value == $str) {
+                    $val = '';
                 }
 
                 $element[$key] = $val;
             }
 
             $retArray[$firstKey] = $element;
-            //$retArray[$firstKey] = $arr;
         }
 
         return $retArray;

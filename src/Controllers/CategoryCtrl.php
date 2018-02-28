@@ -48,6 +48,39 @@ class CategoryCtrl
     }
 
     /**
+     * @param Request $request
+     * @param Response $response
+     * @return Response
+     */
+    public function getAllsArea(Request $request, Response $response) {
+        $search = ['parent' => [
+            'provence-alpes-cotes-d-azure', 'alsace', 'aquitaine', 'auvergne', 'basse-normandie', 'bourgogne',
+            'bretagne', 'centre', 'champagne-ardenne', 'corse', 'departement-d-outre-mer', 'franche-comte',
+            'haute-normandie', 'ile-de-france', 'languedoc-roussillon', 'limousin', 'lorraine', 'midi-pyrennees',
+            'nord-pas-de-calais', 'pays-de-la-loire', 'picardie', 'poitou-charentes', 'rhone-alpes']
+        ];
+
+        $skills = $this->getCategoryDAO()->find($search, ['title' => 'ASC'])
+            ->getAllAsArray();
+
+        return $response->withJson($skills);
+    }
+
+    /**
+     * @param Request $request
+     * @param Response $response
+     * @return Response
+     */
+    public function getAllsMobilities(Request $request, Response $response) {
+        $search = ['parent' => ['mobilite']];
+
+        $skills = $this->getCategoryDAO()->find($search)
+            ->getAllAsArray();
+
+        return $response->withJson($skills);
+    }
+
+    /**
      * @return CategoryDAO
      */
     private function getCategoryDAO()
