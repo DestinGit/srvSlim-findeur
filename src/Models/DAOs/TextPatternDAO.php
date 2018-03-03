@@ -78,12 +78,15 @@ class TextPatternDAO implements ITextPatternDAO
     public function find(array $search = [], array $orderBy = [], array $limit = [])
     {
         // TODO: Implement find() method.
-        $sql = "SELECT * FROM textpattern ";
+        // $sql = "SELECT * FROM textpattern ";
+        $sql = "SELECT * FROM textpattern t LEFT JOIN txp_image i ON t.image = i.id ";
         $whereSting = '';
         $searchValues = [];
 
         $qb = new QueryBuilder();
-        $qb->select("*")->from("textpattern");
+       // $qb->select("*")->from("textpattern");
+        $qb->select("t.*, i.name as nameImg, u.email")
+            ->from("textpattern t LEFT JOIN txp_image i ON t.Image = i.id LEFT JOIN txp_users u ON t.AuthorID = u.name ");
 
         // Build the clause 'where' for the SQL request return the values in array
         $searchValues = $this->buildWhereClause($search, $whereSting, $searchValues, $qb);
@@ -206,7 +209,7 @@ class TextPatternDAO implements ITextPatternDAO
         $ret = true;
 
          $sql = "UPDATE textpattern SET Title = ?, Category1 = ?, Keywords = ?, custom_3 = ?, custom_27 = ?, Body = ?,
-                  LastMod = ?, LastModID = ?, Status = ?, custom_1 = ? 
+                  LastMod = ?, LastModID = ?, Status = ?, custom_1 = ?, Image = ?  
                  WHERE id = ? ";
 //         $sql = "UPDATE textpattern SET custom_27 = ? WHERE id = ? ";
         try {
@@ -221,7 +224,7 @@ class TextPatternDAO implements ITextPatternDAO
                 $tpArticle->getTitle(), $tpArticle->getCategory1(), $tpArticle->getKeywords(),
                 $tpArticle->getCustom3(), $tpArticle->getCustom27(), $tpArticle->getBody(),
                 $tpArticle->getLastMod(), $tpArticle->getLastModID(), $tpArticle->getStatus(),
-                $tpArticle->getCustom1(),
+                $tpArticle->getCustom1(), $tpArticle->getImage(),
                 // Must be at the end of the table
                 $tpArticle->getID()
             ]);

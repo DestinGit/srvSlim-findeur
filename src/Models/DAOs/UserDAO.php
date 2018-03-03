@@ -127,9 +127,11 @@ class UserDAO implements IUserDAO
 
     public function findOneByNameOrEmail(string $name, string $email)
     {
-        $sql = 'SELECT * FROM txp_users WHERE name = ? OR email = ? ';
+       //  $sql = 'SELECT * FROM txp_users WHERE name = ? OR email = ? ';
+        $sql = 'SELECT t.Image, u.* FROM txp_users u LEFT JOIN textpattern t ON t.AuthorID = u.name 
+                WHERE u.name = ? OR u.email = ? LIMIT 1';
 
-        try{
+        try {
             $this->selectStatement = $this->pdo->prepare($sql);
             $this->selectStatement->execute([$name, $email]);
         } catch (\PDOException $exception) {

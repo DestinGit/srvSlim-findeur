@@ -43,10 +43,10 @@ class TextPatternCtrl
      */
     public function getPersonalBusiness(Request $request, Response $response)
     {
-        $search = ['particulier-entreprise' => 'Section LIKE ?'];
+        $search = ['particulier-entreprise' => 'Section LIKE ?', 'Status' => [4]];
 
         // filter input 'results' parameter
-        $options = ['options' => ['default' => 15, 'min_range' => 0]];
+        $options = ['options' => ['default' => 7, 'min_range' => 0]];
         $nbOfResults = filter_input(INPUT_GET, 'results', FILTER_VALIDATE_INT, $options);
 
         $kills = filter_input(INPUT_GET, 'Keywords', FILTER_SANITIZE_STRING);
